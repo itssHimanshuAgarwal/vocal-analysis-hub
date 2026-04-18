@@ -77,7 +77,7 @@ const Index = () => {
   const [activeSources, setActiveSources] = useState<Set<SourceKey>>(new Set());
   const [speaking, setSpeaking] = useState(false);
   const [openSource, setOpenSource] = useState<SourceKey | null>(null);
-  const [activeTab, setActiveTab] = useState<"plan" | "signals" | "context" | "signalit">("plan");
+  const [activeTab, setActiveTab] = useState<"plan" | "signalit">("plan");
   const [tabSourceFilter, setTabSourceFilter] = useState<SourceKey | null>(null);
   const [ringSource, setRingSource] = useState<SourceKey | null>(null);
   const audioElRef = useRef<HTMLAudioElement | null>(null);
@@ -628,7 +628,6 @@ const Index = () => {
               active={activeSources}
               ringSource={ringSource}
               onSelect={(k) => {
-                setActiveTab("signals");
                 setTabSourceFilter(k);
                 setRingSource(k);
                 window.setTimeout(() => setRingSource(null), 1400);
@@ -710,19 +709,13 @@ const Index = () => {
 
                   {morning && <MorningContextCard delayMs={900} />}
 
-                  {actions.length > 0 && (
-                    <div id="plan-tabs">
-                      <PlanTabs
-                        actions={actions}
-                        biomarkers={biomarkers}
-                        delayMs={900}
-                        activeTab={activeTab}
-                        onTabChange={setActiveTab}
-                        sourceFilter={tabSourceFilter}
-                        onClearFilter={() => setTabSourceFilter(null)}
-                      />
-                    </div>
-                  )}
+                  <div id="plan-tabs">
+                    <PlanTabs
+                      delayMs={900}
+                      activeTab={activeTab}
+                      onTabChange={setActiveTab}
+                    />
+                  </div>
 
                   {/* Bottom controls */}
                   <div
