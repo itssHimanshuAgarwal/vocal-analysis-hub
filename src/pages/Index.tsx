@@ -13,7 +13,9 @@ import { generatePlan, type Action } from "@/lib/generatePlan";
 import { HARDCODED_SIGNALS, type Signal } from "@/lib/signals";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchAllSignals, fetchWhatsappRecent, fetchLumaUpcoming } from "@/services/signalitClient";
+import { fetchTomorrowEvents, type CalendarEvent } from "@/services/calendarClient";
 import { PlanTabs } from "@/components/PlanTabs";
+import { BriefingBar } from "@/components/BriefingBar";
 
 // Production: Speechmatics API for medical-grade accuracy
 // Production: Gradium TTS for natural low-latency voice
@@ -80,7 +82,8 @@ const Index = () => {
   const [activeTab, setActiveTab] = useState<"plan" | "signalit">("plan");
   const [tabSourceFilter, setTabSourceFilter] = useState<SourceKey | null>(null);
   const [ringSource, setRingSource] = useState<SourceKey | null>(null);
-  const audioElRef = useRef<HTMLAudioElement | null>(null);
+  const [briefingStarted, setBriefingStarted] = useState(false);
+  
 
   const speechSupported = useMemo(
     () =>
@@ -125,6 +128,17 @@ const Index = () => {
   };
 
   useEffect(() => () => cleanupRecording({ stopRecorder: true, stopStream: true }), []);
+
+  // Auto-speak briefing once results are ready (after pipeline animation ~3.2s + 1s)
+  useEffect(() => {
+    if (phase !== "results" || briefingStarted || !biomarkers || !actions.length) return;
+    setBriefingStarted(true);
+    const t = window.setTimeout(() => {
+      speakPlan();
+    }, 4500);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, biomarkers, actions, briefingStarted]);
 
   const runAnalysis = async (
     finalText: string,
@@ -270,137 +284,115 @@ const Index = () => {
     setParticleTrigger(Date.now());
   };
 
-  const speakWithBrowser = (text: string) => {
-    if (typeof window === "undefined" || !window.speechSynthesis) return;
-    window.speechSynthesis.cancel();
-    // Split into sentences for more natural pacing
-    const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
-    sentences.forEach((s, i) => {
-      const u = new SpeechSynthesisUtterance(s.trim());
-      u.rate = 1.02;
-      u.pitch = 1;
-      if (i === sentences.length - 1) {
-        u.onend = () => {
-          setSpeaking(false);
-          setParticleTrigger(Date.now());
-        };
-      }
-      window.speechSynthesis.speak(u);
-    });
-  };
-
   const buildResponse = async (): Promise<string> => {
     if (!biomarkers) return "";
-    let r = "";
+    const parts: string[] = [];
 
     // Opening based on biomarkers
-    if (biomarkers.stress > 60) r += "Hey. I can hear the stress in your voice. Let's fix your day. ";
-    else if (biomarkers.fatigue > 60) r += "Morning. You sound tired. I've adjusted everything around your energy. ";
-    else r += "Morning. You sound good today. Here's what I've got for you. ";
-
-    // Calendar context (demo-stable)
-    r += "You have 3 meetings today. Your standup is at 10, investor call with Balderton at 2, and team sync at 4. ";
-
-    // Pull live WhatsApp + Luma names in parallel
-    const [waList, lumaList] = await Promise.all([
-      fetchWhatsappRecent(2).catch(() => []),
-      fetchLumaUpcoming(1).catch(() => []),
-    ]);
-
-    if (waList.length >= 2) {
-      const a = waList[0].sender;
-      const b = waList[1].sender;
-      r += `${a} messaged about ${waList[0].content.slice(0, 40)}. ${b} says ${waList[1].content.slice(0, 40)}. `;
-    } else {
-      r += "Gary messaged last night asking about the investor deck. Yusuf says the China factory samples arrive Thursday. ";
-    }
-
-    // Smart recommendations
-    if (biomarkers.fatigue > 60) {
-      r += "Given how tired you sound, I'd skip the team sync and send a Loom instead. Use that hour to rest before tomorrow. ";
-    }
     if (biomarkers.stress > 60) {
-      r += "Your stress is elevated. I've blocked 20 minutes before your investor call for a walk. ";
-    }
-
-    // One intelligence signal
-    const topSignal = actions.find((a) => a.signal)?.signal;
-    if (topSignal) r += `One thing worth knowing: ${topSignal.text}. `;
-    else r += "One thing worth knowing: 20VC just dropped an episode on closing Series B rounds. ";
-
-    // Evening suggestion
-    if (lumaList.length > 0) {
-      const e = lumaList[0];
-      r += `Tonight there's ${e.name}${e.venue_name ? ` at ${e.venue_name}` : ""}. Low key, good for decompressing. I'd go. `;
+      parts.push("Hey Himanshu, I can hear some stress in your voice. Let me help reorganize your day.");
+    } else if (biomarkers.fatigue > 60) {
+      parts.push("Morning. You sound tired. I've adjusted things around your energy.");
+    } else if (biomarkers.energy > 65) {
+      parts.push("Hey! You sound good today. Let's make the most of it.");
     } else {
-      r += "Tonight there's an AI Founders meetup at Shoreditch Studios at 7. Low key, good for decompressing. I'd go. ";
+      parts.push("Hey Himanshu. Here's your briefing.");
     }
 
-    r += "That's your day. Want me to adjust anything?";
-    return r;
+    // Calendar context — pull tomorrow's real events
+    let events: CalendarEvent[] = [];
+    try {
+      events = await fetchTomorrowEvents();
+    } catch {}
+
+    if (events.length > 0) {
+      const first3 = events.slice(0, 3).map((e) => {
+        const t = new Date(e.start);
+        const time = isNaN(t.getTime())
+          ? ""
+          : t.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+        return `${e.summary} at ${time}`.trim();
+      });
+      parts.push(
+        `Looking at your calendar, you have ${events.length} event${events.length === 1 ? "" : "s"}. ${first3.join(", ")}.`,
+      );
+
+      // Smart suggestion
+      if (biomarkers.fatigue > 60 && events.length >= 4) {
+        parts.push("That's a lot for how tired you sound. I'd cancel anything after 4pm.");
+      }
+    } else {
+      parts.push("Your calendar is clear tomorrow. Good chance to do deep work.");
+    }
+
+    // Top signal from plan
+    const topSignal = actions.find((a) => a.signal)?.signal;
+    if (topSignal) {
+      parts.push(`One thing worth knowing: ${topSignal.text}.`);
+    }
+
+    // Recommendation
+    if (biomarkers.stress > 60) {
+      parts.push("Block 20 minutes before your next meeting for a walk.");
+    } else if (biomarkers.energy < 40) {
+      parts.push("Push deep work to after lunch when your energy peaks.");
+    }
+
+    // Evening event (try Luma; fall back to hardcoded)
+    try {
+      const luma = await fetchLumaUpcoming(1);
+      if (luma.length > 0) {
+        const e = luma[0];
+        parts.push(
+          `Tonight there's ${e.name}${e.venue_name ? ` at ${e.venue_name}` : ""}. Low key. Good for decompressing.`,
+        );
+      } else {
+        parts.push("Tonight there's an AI Founders meetup at Shoreditch at 7. Low key. Good for decompressing.");
+      }
+    } catch {
+      parts.push("Tonight there's an AI Founders meetup at Shoreditch at 7. Low key. Good for decompressing.");
+    }
+
+    parts.push("That's your briefing. Tap the mic to ask me anything.");
+    return parts.join(" ");
   };
 
   const speakPlan = async () => {
     if (!actions.length || !biomarkers || speaking) return;
     setSpeaking(true);
-
-    // Stop any existing playback
-    if (audioElRef.current) {
-      audioElRef.current.pause();
-      audioElRef.current.src = "";
-      audioElRef.current = null;
-    }
     if (typeof window !== "undefined" && window.speechSynthesis) {
       window.speechSynthesis.cancel();
     }
-
     const text = await buildResponse();
-
-    // Race Gradium edge function against a 5s timeout — fall back to browser TTS.
-    const gradiumP: Promise<Blob | null> = (async () => {
-      try {
-        const { data, error } = await supabase.functions.invoke("speak-plan", {
-          body: { text },
-        });
-        if (error) {
-          console.warn("gradium invoke error", error);
-          return null;
-        }
-        if (data instanceof Blob) return data.size > 0 ? data : null;
-        // Some clients return ArrayBuffer
-        if (data instanceof ArrayBuffer) return new Blob([data], { type: "audio/mpeg" });
-        return null;
-      } catch (e) {
-        console.warn("gradium failed", e);
-        return null;
-      }
-    })();
-
-    const timeoutP = new Promise<null>((r) => setTimeout(() => r(null), 5000));
-    const audioBlob = await Promise.race([gradiumP, timeoutP]);
-
-    if (audioBlob) {
-      const url = URL.createObjectURL(audioBlob);
-      const audio = new Audio(url);
-      audioElRef.current = audio;
-      audio.onended = () => {
+    if (typeof window === "undefined" || !window.speechSynthesis) {
+      setSpeaking(false);
+      return;
+    }
+    const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
+    const utterances = sentences.map((s) => {
+      const u = new SpeechSynthesisUtterance(s.trim());
+      u.rate = 1.02;
+      u.pitch = 1;
+      return u;
+    });
+    if (utterances.length > 0) {
+      utterances[utterances.length - 1].onend = () => {
         setSpeaking(false);
         setParticleTrigger(Date.now());
-        URL.revokeObjectURL(url);
       };
-      audio.onerror = () => {
-        URL.revokeObjectURL(url);
-        speakWithBrowser(text);
-      };
-      try {
-        await audio.play();
-      } catch (e) {
-        console.warn("audio play failed, falling back", e);
-        speakWithBrowser(text);
-      }
-    } else {
-      speakWithBrowser(text);
     }
+    utterances.forEach((u) => window.speechSynthesis.speak(u));
+  };
+
+  const askFollowUp = (question: string) => {
+    if (typeof window === "undefined" || !window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+    setSpeaking(true);
+    const reply = `You asked: ${question}. Based on what I'm seeing, I'd say focus on the top item in your plan and revisit the rest after a short break.`;
+    const u = new SpeechSynthesisUtterance(reply);
+    u.rate = 1.02;
+    u.onend = () => setSpeaking(false);
+    window.speechSynthesis.speak(u);
   };
 
   const startRecording = async () => {
@@ -411,6 +403,7 @@ const Index = () => {
     setBiomarkerSource(null);
     setSignalSource(null);
     setActions([]);
+    setBriefingStarted(false);
     audioChunksRef.current = [];
     setPhase("recording");
 
@@ -716,6 +709,15 @@ const Index = () => {
                       onTabChange={setActiveTab}
                     />
                   </div>
+
+                  {briefingStarted && (
+                    <div
+                      className="opacity-0 animate-fade-up"
+                      style={{ animationDelay: "100ms", animationFillMode: "forwards" }}
+                    >
+                      <BriefingBar speaking={speaking} onAsk={askFollowUp} />
+                    </div>
+                  )}
 
                   {/* Bottom controls */}
                   <div
