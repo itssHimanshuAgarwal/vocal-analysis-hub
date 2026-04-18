@@ -282,10 +282,6 @@ export const ConversationMode = ({ biomarkers, actions, active, onExit }: Props)
           </div>
         ))}
       </div>
-
-      <div className="mt-4 text-[10px] text-zinc-600 text-center">
-        speaks via your browser, no API key
-      </div>
     </div>
   );
 };
