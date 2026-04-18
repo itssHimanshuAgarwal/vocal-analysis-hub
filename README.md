@@ -102,7 +102,7 @@ B2B SaaS. Sell to companies who lose money when their people burn out.
 
 ## Built By
 
-**Himanshu Agarwal** — Founders Office at Tilt (live commerce, Balderton-backed, Series B). CS engineering background. LBS MBA. Former VC at Albion. Built SignalIT as a personal intelligence platform. Built TrustStream at the Hedera hackathon. Locked In is the missing layer between your calendar and your biology.
+**Himanshu Agarwal** — Founders Office at Tilt (live commerce, Balderton-backed, Series B). CS engineering background. LBS MBA. Former VC at Albion. Software Engineer at Algo8AI & AI researcher at NTU Singapore
 
 ## Track
 
