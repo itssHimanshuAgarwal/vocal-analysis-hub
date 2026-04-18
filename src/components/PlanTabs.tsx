@@ -26,7 +26,7 @@ type NextStep = {
 const NEXT_STEPS: NextStep[] = [
   {
     title: "Prep for your investor call with Greg",
-    why: "You have 'meet Greg for seed funding' at 4pm tomorrow. Your stress is elevated — preparation will reduce anxiety.",
+    why: "You have 'meet Greg for seed funding' at 4pm tomorrow. Your stress is elevated, preparation will reduce anxiety.",
     action: "Listen to 20VC Episode: 'How to close a Series B in 2 weeks' by Harry Stebbings before the call. Key insight: lead with market size, not product.",
     source: "PODCAST",
   },
@@ -38,7 +38,7 @@ const NEXT_STEPS: NextStep[] = [
   },
   {
     title: "Reply to Gary about the investor deck",
-    why: "Gary messaged last night. Unresolved messages increase cognitive load — your focus score is already low.",
+    why: "Gary messaged last night. Unresolved messages increase cognitive load, your focus score is already low.",
     action: "Send a 2-line update: 'Deck is 80% done. Will share tomorrow noon.' Takes 30 seconds, clears your mental queue.",
     source: "WHATSAPP",
   },
@@ -50,7 +50,7 @@ const NEXT_STEPS: NextStep[] = [
   },
   {
     title: "Read Morning Brew's UK funding report",
-    why: "UK startup funding hit a 3-year high. Use this data point in your investor deck — it validates your timing.",
+    why: "UK startup funding hit a 3-year high. Use this data point in your investor deck, it validates your timing.",
     action: "2 minute read. Pull the headline stat into slide 3 of your deck.",
     source: "NEWSLETTER",
   },

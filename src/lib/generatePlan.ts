@@ -39,32 +39,32 @@ export function generatePlan(
 
   if (morning) {
     // Pinned calendar slot: standup
-    drafts.push({ text: "Daily Standup — keep to 15 min, defer detail to Slack", difficulty: "low", minutes: 30, fixedTime: "10:00–10:30" });
+    drafts.push({ text: "Daily Standup, keep to 15 min, defer detail to Slack", difficulty: "low", minutes: 30, fixedTime: "10:00–10:30" });
 
     // Reply to Gary about deck (WhatsApp pending)
-    drafts.push({ text: "Reply to Gary on WhatsApp — send the v3 investor deck + 1-line context", difficulty: "low", minutes: 30 });
+    drafts.push({ text: "Reply to Gary on WhatsApp, send the v3 investor deck + 1-line context", difficulty: "low", minutes: 30 });
 
     // Investor call prep timing depends on biomarkers
     if (fatigued) {
-      drafts.push({ text: "Investor call prep moved to 10:45 — cortisol peak window for sharper recall", difficulty: "high", minutes: 60 });
+      drafts.push({ text: "Investor call prep moved to 10:45, cortisol peak window for sharper recall", difficulty: "high", minutes: 60 });
     } else {
-      drafts.push({ text: "Deep prep for Balderton call — refine narrative + Series B benchmarks", difficulty: "high", minutes: 90 });
+      drafts.push({ text: "Deep prep for Balderton call, refine narrative + Series B benchmarks", difficulty: "high", minutes: 90 });
     }
 
-    drafts.push({ text: "Investor Call — Balderton", difficulty: "high", minutes: 60, fixedTime: "14:00–15:00" });
+    drafts.push({ text: "Investor Call, Balderton", difficulty: "high", minutes: 60, fixedTime: "14:00–15:00" });
 
     // Stress + packed calendar → cancel team sync
     if (stressed) {
-      drafts.push({ text: "Cancel 4pm Team Sync — send async Loom update instead, protect recovery window", difficulty: "low", minutes: 45, fixedTime: "16:00–16:45" });
+      drafts.push({ text: "Cancel 4pm Team Sync, send async Loom update instead, protect recovery window", difficulty: "low", minutes: 45, fixedTime: "16:00–16:45" });
     } else {
-      drafts.push({ text: "Team Sync — keep agenda tight, 3 items max", difficulty: "medium", minutes: 45, fixedTime: "16:00–16:45" });
+      drafts.push({ text: "Team Sync, keep agenda tight, 3 items max", difficulty: "medium", minutes: 45, fixedTime: "16:00–16:45" });
     }
     return finalize(drafts.slice(0, 5), bio, signalPool);
   }
 
   // Default (non-morning) plan
   if (bio.energy < 40) {
-    drafts.push({ text: "10-min walk + coffee — reset before deep work", difficulty: "low", minutes: 30 });
+    drafts.push({ text: "10-min walk + coffee, reset before deep work", difficulty: "low", minutes: 30 });
   }
   if (stressed) {
     drafts.push({ text: "Cancel one meeting, send async update instead", difficulty: "low", minutes: 30 });
@@ -72,13 +72,13 @@ export function generatePlan(
   if (bio.focus < 40) {
     drafts.push({ text: "Single-task mode: notifications off, one tab, 60-min focus block on most-important deck", difficulty: "medium", minutes: 60 });
   } else {
-    drafts.push({ text: "Deep work: investor deck — narrative + Series B benchmarks", difficulty: "high", minutes: 90 });
+    drafts.push({ text: "Deep work: investor deck, narrative + Series B benchmarks", difficulty: "high", minutes: 90 });
   }
   drafts.push({ text: "30-min outbound: 3 warm intros to founders for hiring + investor signal", difficulty: "medium", minutes: 60 });
   if (fatigued) {
-    drafts.push({ text: "Light review of team async updates — defer hard decisions to tomorrow AM", difficulty: "low", minutes: 60 });
+    drafts.push({ text: "Light review of team async updates, defer hard decisions to tomorrow AM", difficulty: "low", minutes: 60 });
   } else {
-    drafts.push({ text: "Founder evening: AI Founders drinks — 2 conversations, 0 pitching", difficulty: "medium", minutes: 90 });
+    drafts.push({ text: "Founder evening: AI Founders drinks, 2 conversations, 0 pitching", difficulty: "medium", minutes: 90 });
   }
 
   const chosen = drafts.slice(0, 5);

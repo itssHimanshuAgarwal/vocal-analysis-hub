@@ -231,7 +231,8 @@ const Index = () => {
       }
     })();
 
-    const minScan = new Promise((r) => setTimeout(r, 2500));
+    // Force a longer "thinking" window so users feel the API working.
+    const minScan = new Promise((r) => setTimeout(r, 4000));
     const [analysisResult, smTranscript] = await Promise.all([
       runAnalysis(finalText, audioBlob),
       speechmaticsP,
@@ -497,22 +498,7 @@ const Index = () => {
             your voice reveals what your words hide
           </p>
 
-          <div className="h-8" />
-
-          {/* Morning Check-in toggle */}
-          <button
-            onClick={() => setMorning((m) => !m)}
-            aria-pressed={morning}
-            className={`text-xs px-4 py-1.5 rounded-full font-medium transition-all duration-500 ease-out hover:scale-[1.02] ${
-              morning
-                ? "bg-green-500/10 border border-green-500/20 text-green-400 shadow-[0_0_18px_-4px_rgba(0,212,126,0.5)]"
-                : "bg-zinc-800 text-zinc-500 border border-transparent"
-            }`}
-          >
-            {morning ? "● Morning Check-in" : "○ Morning Check-in"}
-          </button>
-
-          <div className="h-6" />
+          <div className="h-2" />
 
           {/* Mic button */}
           <button
@@ -581,6 +567,13 @@ const Index = () => {
             </p>
           )}
 
+          {/* Live agent pipeline — visible while recording so users see the system working in real time */}
+          {isRecording && (
+            <div className="mt-10 w-full max-w-4xl animate-fade-up">
+              <AgentPipeline phase={phase} />
+            </div>
+          )}
+
           {/* Typed fallback when SpeechRecognition isn't supported */}
           {!speechSupported && phase !== "recording" && phase !== "scanning" && (
             <div className="mt-10 w-full max-w-xl">
@@ -631,33 +624,37 @@ const Index = () => {
             aria-live="polite"
           >
             {phase === "scanning" ? (
-              <div className="relative overflow-hidden rounded-2xl border border-white/[0.06] bg-[#111113] p-10">
-                <div className="text-zinc-400 text-sm tracking-wide">
-                  reading your voice...
-                </div>
-                <div className="mt-6 h-24 relative overflow-hidden rounded-xl bg-[#0c0c0e] border border-white/[0.04]">
-                  <div
-                    className="absolute top-0 bottom-0 w-32 animate-scan-sweep"
-                    style={{
-                      background:
-                        "linear-gradient(90deg, transparent, rgba(0,212,126,0.6), transparent)",
-                      boxShadow: "0 0 24px rgba(0,212,126,0.6)",
-                    }}
-                  />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="flex items-end gap-1 h-10">
-                      {Array.from({ length: 30 }).map((_, i) => (
-                        <div
-                          key={i}
-                          className="w-1 rounded-full bg-[#00D47E]/40"
-                          style={{
-                            height: `${10 + Math.abs(Math.sin(i * 0.6)) * 24}px`,
-                          }}
-                        />
-                      ))}
+              <div className="space-y-6">
+                <div className="relative overflow-hidden rounded-2xl border border-white/[0.06] bg-[#111113] p-10">
+                  <div className="text-zinc-400 text-sm tracking-wide">
+                    processing your voice through 12 sources...
+                  </div>
+                  <div className="mt-6 h-24 relative overflow-hidden rounded-xl bg-[#0c0c0e] border border-white/[0.04]">
+                    <div
+                      className="absolute top-0 bottom-0 w-32 animate-scan-sweep"
+                      style={{
+                        background:
+                          "linear-gradient(90deg, transparent, rgba(0,212,126,0.6), transparent)",
+                        boxShadow: "0 0 24px rgba(0,212,126,0.6)",
+                      }}
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="flex items-end gap-1 h-10">
+                        {Array.from({ length: 30 }).map((_, i) => (
+                          <div
+                            key={i}
+                            className="w-1 rounded-full bg-[#00D47E]/40"
+                            style={{
+                              height: `${10 + Math.abs(Math.sin(i * 0.6)) * 24}px`,
+                            }}
+                          />
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </div>
+                {/* Keep pipeline animating during the scan/processing window */}
+                <AgentPipeline phase={phase} />
               </div>
             ) : (
               biomarkers && (
@@ -694,7 +691,7 @@ const Index = () => {
                     <AgentPipeline phase={phase} />
                   </div>
 
-                  {morning && <MorningContextCard delayMs={900} />}
+                  
 
                   <div id="plan-tabs">
                     <PlanTabs

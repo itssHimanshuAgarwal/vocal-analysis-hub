@@ -153,7 +153,7 @@ export async function fetchAllSignals(): Promise<{ signals: LiveSignal[]; source
     sources.add("LUMA");
     const when = r.start_date ? new Date(r.start_date).toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "";
     signals.push({
-      text: `${truncate(r.name || "Event")} — ${r.venue_name ?? ""} ${when}${r.rsvp_count ? ` · ${r.rsvp_count} RSVPs` : ""}`,
+      text: `${truncate(r.name || "Event")}, ${r.venue_name ?? ""} ${when}${r.rsvp_count ? ` · ${r.rsvp_count} RSVPs` : ""}`,
       source: "LUMA",
       topics: ["event", "networking", ...tokenize(r.name), ...tokenize(r.venue_name)],
       live: true,
@@ -182,7 +182,7 @@ export async function fetchAllSignals(): Promise<{ signals: LiveSignal[]; source
 }
 
 // =================================================================
-// Signals tab — top items across tables, ranked by signal_strength
+// Signals tab, top items across tables, ranked by signal_strength
 // =================================================================
 export type TopSignal = {
   source: string;
