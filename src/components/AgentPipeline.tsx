@@ -113,15 +113,15 @@ interface Props {
 
 // Source nodes (Layer 3) — id, label, sublabel, color, y position
 const SOURCES: Array<{ id: string; label: string; sublabel: string; color: ColorKey; y: number }> = [
-  { id: "src_nl", label: "Newsletters", sublabel: "11 stories", color: "orange", y: 0 },
-  { id: "src_pod", label: "Podcasts", sublabel: "345 episodes", color: "green", y: 42 },
-  { id: "src_li", label: "LinkedIn", sublabel: "4 profiles", color: "blue", y: 84 },
-  { id: "src_tw", label: "Twitter", sublabel: "Naval", color: "sky", y: 126 },
-  { id: "src_rd", label: "Reddit", sublabel: "20 tickers", color: "red", y: 168 },
-  { id: "src_wa", label: "WhatsApp", sublabel: "128 groups", color: "emerald", y: 210 },
-  { id: "src_lu", label: "Luma", sublabel: "153 events", color: "pink", y: 252 },
-  { id: "src_dc", label: "Discord", sublabel: "15 channels", color: "indigo", y: 294 },
-  { id: "src_yt", label: "YouTube", sublabel: "36 channels", color: "red", y: 336 },
+  { id: "src_nl", label: "Newsletters", sublabel: "", color: "orange", y: 0 },
+  { id: "src_pod", label: "Podcasts", sublabel: "", color: "green", y: 42 },
+  { id: "src_li", label: "LinkedIn", sublabel: "", color: "blue", y: 84 },
+  { id: "src_tw", label: "Twitter", sublabel: "", color: "sky", y: 126 },
+  { id: "src_rd", label: "Reddit", sublabel: "", color: "red", y: 168 },
+  { id: "src_wa", label: "WhatsApp", sublabel: "", color: "emerald", y: 210 },
+  { id: "src_lu", label: "Luma", sublabel: "", color: "pink", y: 252 },
+  { id: "src_dc", label: "Discord", sublabel: "", color: "indigo", y: 294 },
+  { id: "src_yt", label: "YouTube", sublabel: "", color: "red", y: 336 },
 ];
 
 export const AgentPipeline = ({ phase }: Props) => {
