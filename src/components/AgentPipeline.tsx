@@ -142,29 +142,46 @@ export const AgentPipeline = ({ phase }: Props) => {
       return;
     }
     if (phase === "recording") {
-      setStep(0);
-      return;
-    }
-    if (phase === "scanning" || phase === "results") {
+      // Live animation while user is speaking: cascade through steps so the
+      // pipeline visibly "works" in real time, then loop the source layer to
+      // show continuous activity.
       setStep(0);
       const timers: number[] = [];
+      const liveSchedule: Array<[number, number]> = [
+        [400, 1],   // Gradium STT
+        [800, 2],   // Speechmatics + Thymia + Calendar
+        [1200, 3],
+        [1400, 4],
+        [1600, 5],
+        [1800, 6],
+        [2000, 7],
+        [2200, 8],
+        [2400, 9],
+        [2600, 10],
+        [2800, 11],
+        [3100, 12], // TinyFish lights up
+        [3500, 13], // GPT + Mood pulse
+      ];
+      liveSchedule.forEach(([ms, s]) => {
+        timers.push(window.setTimeout(() => setStep(s), ms));
+      });
+      // Heartbeat pulse: nudge step between 12 and 13 to keep edges flowing.
+      const beat = window.setInterval(() => {
+        setStep((s) => (s >= 13 ? 12 : s));
+      }, 1500);
+      timers.push(beat as unknown as number);
+      return () => {
+        timers.forEach(clearTimeout);
+        clearInterval(beat);
+      };
+    }
+    if (phase === "scanning" || phase === "results") {
+      // Continue from wherever recording left off, finalize the plan + TTS nodes.
+      const timers: number[] = [];
       const schedule: Array<[number, number]> = [
-        [300, 1],   // Gradium STT
-        [500, 2],   // Speechmatics + Thymia + Calendar
-        // 9 sources cascade starting 900ms, 100ms stagger → steps 3..11
-        [900, 3],
-        [1000, 4],
-        [1100, 5],
-        [1200, 6],
-        [1300, 7],
-        [1400, 8],
-        [1500, 9],
-        [1600, 10],
-        [1700, 11],
-        [1800, 12], // TinyFish
-        [2100, 13], // GPT-4o + Mood Tracker
-        [2500, 14], // Plan
-        [2800, 15], // Gradium TTS
+        [200, 13],   // GPT + Mood
+        [800, 14],   // Plan
+        [1400, 15],  // Gradium TTS
       ];
       schedule.forEach(([ms, s]) => {
         timers.push(window.setTimeout(() => setStep(s), ms));
