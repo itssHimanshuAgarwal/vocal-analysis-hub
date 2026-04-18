@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { analyzeBiomarkers, type Biomarkers } from "@/lib/analyzeBiomarkers";
 import { BiomarkerCard } from "@/components/BiomarkerCard";
 import { TranscriptCard } from "@/components/TranscriptCard";
-import { ActionPlan } from "@/components/ActionPlan";
+// ActionPlan is rendered inside PlanTabs
 import { SponsorBadges } from "@/components/SponsorBadges";
 import { Particles } from "@/components/Particles";
 import { SourcesStrip, SOURCE_FROM_SIGNAL, type SourceKey } from "@/components/SourcesStrip";
@@ -711,7 +711,17 @@ const Index = () => {
                   {morning && <MorningContextCard delayMs={900} />}
 
                   {actions.length > 0 && (
-                    <ActionPlan actions={actions} delayMs={900} />
+                    <div id="plan-tabs">
+                      <PlanTabs
+                        actions={actions}
+                        biomarkers={biomarkers}
+                        delayMs={900}
+                        activeTab={activeTab}
+                        onTabChange={setActiveTab}
+                        sourceFilter={tabSourceFilter}
+                        onClearFilter={() => setTabSourceFilter(null)}
+                      />
+                    </div>
                   )}
 
                   {/* Bottom controls */}
@@ -741,7 +751,7 @@ const Index = () => {
                           </span>
                         </>
                       ) : (
-                        "Listen to your plan"
+                        "Hear your briefing"
                       )}
                     </button>
                     <SponsorBadges activated={phase === "results"} />
