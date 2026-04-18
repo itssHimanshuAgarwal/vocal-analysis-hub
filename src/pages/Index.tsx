@@ -450,9 +450,38 @@ const Index = () => {
     setFallbackText("");
   };
 
+  const speakGreeting = (onDone: () => void) => {
+    if (typeof window === "undefined" || !window.speechSynthesis) {
+      onDone();
+      return;
+    }
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance("Hey Himanshu! How's your day been so far?");
+    u.rate = 1.02;
+    u.pitch = 1;
+    let done = false;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      setSpeaking(false);
+      onDone();
+    };
+    u.onend = finish;
+    u.onerror = finish;
+    setSpeaking(true);
+    window.speechSynthesis.speak(u);
+    // Safety net in case TTS stalls
+    window.setTimeout(finish, 4000);
+  };
+
   const handleMicClick = () => {
-    if (phase === "idle" || phase === "results") startRecording();
-    else if (phase === "recording") finishRecording();
+    if (phase === "recording") {
+      finishRecording();
+      return;
+    }
+    if (phase === "idle" || phase === "results") {
+      speakGreeting(() => startRecording());
+    }
   };
 
   const isRecording = phase === "recording";
