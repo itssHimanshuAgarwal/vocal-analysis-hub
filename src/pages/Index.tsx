@@ -704,6 +704,24 @@ const Index = () => {
                     />
                   </div>
 
+                  {!briefingStarted && (
+                    <div
+                      className="flex justify-center opacity-0 animate-fade-up"
+                      style={{ animationDelay: "1100ms", animationFillMode: "forwards" }}
+                    >
+                      <button
+                        onClick={() => setBriefingStarted(true)}
+                        className="bg-green-500 text-black font-semibold px-6 py-3 rounded-full shadow-[0_0_30px_-5px_rgba(0,212,126,0.6)] transition-all duration-300 hover:scale-[1.03] hover:bg-green-400 inline-flex items-center gap-2"
+                      >
+                        <span className="relative flex h-2 w-2">
+                          <span className="absolute inline-flex h-full w-full rounded-full bg-black/40 opacity-75 animate-ping" />
+                          <span className="relative inline-flex h-2 w-2 rounded-full bg-black" />
+                        </span>
+                        Start conversation
+                      </button>
+                    </div>
+                  )}
+
                   {briefingStarted && biomarkers && (
                     <div
                       className="opacity-0 animate-fade-up"
