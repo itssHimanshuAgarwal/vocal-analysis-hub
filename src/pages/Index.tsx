@@ -624,7 +624,18 @@ const Index = () => {
         {/* SOURCES (between hero and results, only after first recording) */}
         {hasRecorded && (
           <section className="mt-12">
-            <SourcesStrip active={activeSources} onSelect={(k) => setOpenSource(k)} />
+            <SourcesStrip
+              active={activeSources}
+              ringSource={ringSource}
+              onSelect={(k) => {
+                setActiveTab("signals");
+                setTabSourceFilter(k);
+                setRingSource(k);
+                window.setTimeout(() => setRingSource(null), 1400);
+                // Smooth scroll to results
+                document.getElementById("plan-tabs")?.scrollIntoView({ behavior: "smooth", block: "start" });
+              }}
+            />
           </section>
         )}
 
