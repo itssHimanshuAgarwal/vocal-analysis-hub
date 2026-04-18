@@ -107,13 +107,85 @@ const Index = () => {
 
   useEffect(() => () => cleanupRecording(), []);
 
-  const finishRecording = (overrideTranscript?: string) => {
+  const runAnalysis = async (
+    finalText: string,
+    audioBlob: Blob | null,
+  ): Promise<{ bio: Biomarkers; bioSource: "live" | "simulated"; signals: Signal[]; sigSource: "live" | "fallback" }> => {
+    const fallbackBio = analyzeBiomarkers(finalText);
+
+    const thymiaP: Promise<{ bio: Biomarkers; source: "live" | "simulated" }> = (async () => {
+      if (!audioBlob || audioBlob.size < 100) return { bio: fallbackBio, source: "simulated" as const };
+      try {
+        const fd = new FormData();
+        fd.append("audio", audioBlob, "voice.webm");
+        const { data, error } = await supabase.functions.invoke("analyze-biomarkers", { body: fd });
+        if (error || !data?.ok || !data?.biomarkers) {
+          return { bio: fallbackBio, source: "simulated" as const };
+        }
+        return { bio: data.biomarkers as Biomarkers, source: "live" as const };
+      } catch (e) {
+        console.warn("thymia invoke failed", e);
+        return { bio: fallbackBio, source: "simulated" as const };
+      }
+    })();
+
+    const tinyfishP: Promise<{ signals: Signal[]; source: "live" | "fallback" }> = (async () => {
+      if (!finalText.trim()) return { signals: HARDCODED_SIGNALS, source: "fallback" as const };
+      try {
+        const { data, error } = await supabase.functions.invoke("fetch-signals", {
+          body: { transcript: finalText },
+        });
+        if (error || !data?.ok || !Array.isArray(data?.signals) || data.signals.length === 0) {
+          return { signals: HARDCODED_SIGNALS, source: "fallback" as const };
+        }
+        return { signals: [...(data.signals as Signal[]), ...HARDCODED_SIGNALS], source: "live" as const };
+      } catch (e) {
+        console.warn("tinyfish invoke failed", e);
+        return { signals: HARDCODED_SIGNALS, source: "fallback" as const };
+      }
+    })();
+
+    const [t, f] = await Promise.all([thymiaP, tinyfishP]);
+    return { bio: t.bio, bioSource: t.source, signals: f.signals, sigSource: f.source };
+  };
+
+  const finishRecording = async (overrideTranscript?: string) => {
     cleanupRecording();
     const finalText = overrideTranscript ?? transcriptRef.current;
+    if (overrideTranscript !== undefined) {
+      setTranscript(overrideTranscript);
+      transcriptRef.current = overrideTranscript;
+    }
+
     setBiomarkers(analyzeBiomarkers(finalText));
-    if (overrideTranscript !== undefined) setTranscript(overrideTranscript);
     setPhase("scanning");
-    window.setTimeout(() => setPhase("results"), 2500);
+
+    const audioBlob = await new Promise<Blob | null>((resolve) => {
+      const mr = mediaRecorderRef.current;
+      if (!mr || mr.state === "inactive") {
+        resolve(audioChunksRef.current.length ? new Blob(audioChunksRef.current, { type: "audio/webm" }) : null);
+        return;
+      }
+      mr.addEventListener(
+        "stop",
+        () => resolve(new Blob(audioChunksRef.current, { type: "audio/webm" })),
+        { once: true },
+      );
+      try { mr.stop(); } catch { resolve(null); }
+    });
+
+    const minScan = new Promise((r) => setTimeout(r, 2500));
+    const [{ bio, bioSource, signals, sigSource }] = await Promise.all([
+      runAnalysis(finalText, audioBlob),
+      minScan,
+    ]);
+
+    setBiomarkers(bio);
+    setBiomarkerSource(bioSource);
+    setSignalSource(sigSource);
+    setActions(generatePlan(finalText, bio, signals));
+    setPhase("results");
+    setParticleTrigger(Date.now());
   };
 
   const startRecording = async () => {
@@ -121,12 +193,19 @@ const Index = () => {
     transcriptRef.current = "";
     setCountdown(15);
     setBiomarkers(null);
+    setBiomarkerSource(null);
+    setSignalSource(null);
+    setActions([]);
+    audioChunksRef.current = [];
     setPhase("recording");
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
       const mr = new MediaRecorder(stream);
+      mr.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) audioChunksRef.current.push(e.data);
+      };
       mediaRecorderRef.current = mr;
       mr.start();
     } catch (err) {
