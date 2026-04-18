@@ -3,7 +3,7 @@ import {
   SiYoutube,
   SiSubstack,
   SiSpotify,
-  SiLinkedin,
+  SiLinkedin as SiLinkedinIcon,
   SiX,
   SiGithub,
   SiReddit,
