@@ -11,6 +11,7 @@ import { AgentPipeline } from "@/components/AgentPipeline";
 import { generatePlan, type Action } from "@/lib/generatePlan";
 import { HARDCODED_SIGNALS, type Signal } from "@/lib/signals";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchAllSignals } from "@/services/signalitClient";
 
 // Production: Speechmatics API for medical-grade accuracy
 // Production: Gradium TTS for natural low-latency voice
@@ -122,7 +123,7 @@ const Index = () => {
   const runAnalysis = async (
     finalText: string,
     audioBlob: Blob | null,
-  ): Promise<{ bio: Biomarkers; bioSource: "live" | "simulated"; signals: Signal[]; sigSource: "live" | "fallback" }> => {
+  ): Promise<{ bio: Biomarkers; bioSource: "live" | "simulated"; signals: Signal[]; sigSource: "live" | "fallback"; liveSources: Set<string> }> => {
     const fallbackBio = analyzeBiomarkers(finalText);
 
     const thymiaP: Promise<{ bio: Biomarkers; source: "live" | "simulated" }> = (async () => {
@@ -157,8 +158,20 @@ const Index = () => {
       }
     })();
 
-    const [t, f] = await Promise.all([thymiaP, tinyfishP]);
-    return { bio: t.bio, bioSource: t.source, signals: f.signals, sigSource: f.source };
+    const signalitP = (async () => {
+      try {
+        return await fetchAllSignals();
+      } catch (e) {
+        console.warn("signalit fetch failed", e);
+        return { signals: [], sources: new Set<string>() };
+      }
+    })();
+
+    const [t, f, s] = await Promise.all([thymiaP, tinyfishP, signalitP]);
+    // Live SignalIT signals take priority, then TinyFish/fallback as backfill.
+    const merged: Signal[] = [...s.signals, ...f.signals];
+    const sigSource: "live" | "fallback" = s.signals.length > 0 ? "live" : f.source;
+    return { bio: t.bio, bioSource: t.source, signals: merged, sigSource, liveSources: s.sources };
   };
 
   const finishRecording = async (overrideTranscript?: string) => {
@@ -207,11 +220,12 @@ const Index = () => {
     })();
 
     const minScan = new Promise((r) => setTimeout(r, 2500));
-    const [{ bio, bioSource, signals, sigSource }, smTranscript] = await Promise.all([
+    const [analysisResult, smTranscript] = await Promise.all([
       runAnalysis(finalText, audioBlob),
       speechmaticsP,
       minScan,
     ]) as [Awaited<ReturnType<typeof runAnalysis>>, string | null, unknown];
+    const { bio, bioSource, signals, sigSource, liveSources } = analysisResult;
 
     // If Speechmatics returned a more accurate transcript, swap it in.
     let usedTranscript = finalText;
@@ -223,13 +237,17 @@ const Index = () => {
 
     const plan = generatePlan(usedTranscript, bio, signals, { morning });
 
-    // Compute lit-up sources from chosen signals.
+    // Compute lit-up sources from chosen signals + any source that returned live data.
     const sources = new Set<SourceKey>();
     plan.forEach((a) => {
       if (a.signal) {
         const key = SOURCE_FROM_SIGNAL[a.signal.source.toUpperCase()];
         if (key) sources.add(key);
       }
+    });
+    liveSources.forEach((src) => {
+      const key = SOURCE_FROM_SIGNAL[src.toUpperCase()];
+      if (key) sources.add(key);
     });
     if (morning) {
       sources.add("WA");

@@ -48,9 +48,17 @@ export const ActionPlan = ({
                 <div className="flex-1 text-xs text-purple-300 leading-relaxed">
                   {a.signal.text}
                 </div>
-                <span className="rounded-full border border-purple-500/20 bg-purple-500/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-purple-300">
-                  {a.signal.source}
-                </span>
+                <div className="flex shrink-0 items-center gap-1.5">
+                  {a.signal.live && (
+                    <span className="inline-flex items-center gap-1 rounded-full border border-green-500/30 bg-green-500/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-green-400">
+                      <span className="h-1.5 w-1.5 rounded-full bg-green-400 shadow-[0_0_6px_rgba(0,212,126,0.8)] animate-pulse" />
+                      Live
+                    </span>
+                  )}
+                  <span className="rounded-full border border-purple-500/20 bg-purple-500/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-purple-300">
+                    {a.signal.source}
+                  </span>
+                </div>
               </div>
             )}
           </div>
