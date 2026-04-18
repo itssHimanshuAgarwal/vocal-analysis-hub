@@ -68,6 +68,11 @@ const Index = () => {
   const [signalSource, setSignalSource] = useState<"live" | "fallback" | null>(null);
   const [fallbackText, setFallbackText] = useState("");
   const [particleTrigger, setParticleTrigger] = useState(0);
+  const [morning, setMorning] = useState(false);
+  const [hasRecorded, setHasRecorded] = useState(false);
+  const [activeSources, setActiveSources] = useState<Set<SourceKey>>(new Set());
+  const [speaking, setSpeaking] = useState(false);
+  const audioElRef = useRef<HTMLAudioElement | null>(null);
 
   const speechSupported = useMemo(
     () =>
