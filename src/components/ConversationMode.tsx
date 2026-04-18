@@ -194,10 +194,10 @@ export const ConversationMode = ({ biomarkers, actions, active, onExit }: Props)
     const opener = buildOpener(biomarkers);
     append({ role: "agent", text: opener });
     historyRef.current.push({ role: "assistant", content: opener });
-    // Slight delay so the message is visible before TTS starts
+    // Speak immediately — no perceptible delay after recording stops
     const t = window.setTimeout(() => {
       speak(opener, () => startListening());
-    }, 600);
+    }, 80);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active]);

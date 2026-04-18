@@ -11,7 +11,7 @@ const POSITIVE = ["promotion", "investment", "great", "amazing", "cute", "date",
 const NEGATIVE = ["fight", "argument", "bad", "terrible", "fired", "lost", "broke", "broken", "rejected", "sick"];
 const WORK = ["deck", "investor", "meeting", "call", "fundraising", "hiring", "standup", "board"];
 const AFFIRM = ["yes", "yeah", "sure", "go ahead", "walk me through", "plan", "tomorrow", "okay", "ok", "please"];
-const CURIOUS = ["anything interesting", "what should i do", "any events", "ecosystem", "what else", "anything else", "news"];
+const CURIOUS = ["anything interesting", "what should i do", "any events", "ecosystem", "what else", "anything else", "news", "next steps", "next step", "recommend"];
 const FAREWELL = ["thanks", "thank you", "that's all", "bye", "done", "goodbye", "later"];
 
 const formatTime = (iso: string) => {
@@ -79,19 +79,7 @@ export const buildReply = (intent: Intent, ctx: ReplyContext): string => {
     }
 
     case "curious": {
-      const sigs = actions.map((a) => a.signal).filter(Boolean) as NonNullable<Action["signal"]>[];
-      const first = sigs[0];
-      const second = sigs[1];
-      const parts: string[] = [
-        "Actually yes. I went through all 12 of your intelligence sources.",
-      ];
-      if (first) parts.push(`${first.text}.`);
-      if (second) parts.push(`Also, ${second.text}.`);
-      parts.push("And there's an event tonight, AI Founders drinks at Shoreditch Studios, 43 people going.");
-      if (biomarkers.energy > 50) parts.push("Given your energy level, I think you should go. Low key, good conversations, home by 9.");
-      else parts.push("Given your energy, I'd skip it tonight and rest up.");
-      parts.push("Also, there's a GitHub repo trending right now that's relevant to what you're building, an open source voice agent framework that got 1200 stars in 3 days. Worth checking out tomorrow morning.");
-      return parts.join(" ");
+      return "Okay, here's what I'd recommend. First, before your call with Greg tomorrow, listen to the 20VC episode on closing a Series B. Harry Stebbings covers exactly what you need. Second, reply to Gary right now, just two lines saying the deck will be ready by noon tomorrow. Third, there's an AI Founders event tonight at Shoreditch. Low key, 43 people. I think you should go, it's good for decompression. Fourth, there's a voice agent framework trending on GitHub with 1200 stars. Worth bookmarking for your build. And fifth, Morning Brew says UK funding hit a 3-year high. Drop that stat into your deck. That's it. Want me to go deeper on any of these?";
     }
 
     case "farewell":
