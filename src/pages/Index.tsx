@@ -5,6 +5,8 @@ import { TranscriptCard } from "@/components/TranscriptCard";
 import { ActionPlan } from "@/components/ActionPlan";
 import { SponsorBadges } from "@/components/SponsorBadges";
 import { Particles } from "@/components/Particles";
+import { SourcesStrip, SOURCE_FROM_SIGNAL, type SourceKey } from "@/components/SourcesStrip";
+import { MorningContextCard } from "@/components/MorningContextCard";
 import { generatePlan, type Action } from "@/lib/generatePlan";
 import { HARDCODED_SIGNALS, type Signal } from "@/lib/signals";
 import { supabase } from "@/integrations/supabase/client";
