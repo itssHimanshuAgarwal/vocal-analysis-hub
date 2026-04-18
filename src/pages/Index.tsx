@@ -1,4 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { analyzeBiomarkers, type Biomarkers } from "@/lib/analyzeBiomarkers";
+import { BiomarkerCard } from "@/components/BiomarkerCard";
+import { TranscriptCard } from "@/components/TranscriptCard";
 
 const MicIcon = ({ className = "" }: { className?: string }) => (
   <svg
@@ -48,6 +51,18 @@ const Index = () => {
   const [phase, setPhase] = useState<Phase>("idle");
   const [countdown, setCountdown] = useState(15);
   const [transcript, setTranscript] = useState("");
+  const [biomarkers, setBiomarkers] = useState<Biomarkers | null>(null);
+  const [fallbackText, setFallbackText] = useState("");
+
+  const speechSupported = useMemo(
+    () =>
+      typeof window !== "undefined" &&
+      Boolean(
+        (window as any).webkitSpeechRecognition ||
+          (window as any).SpeechRecognition
+      ),
+    []
+  );
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
