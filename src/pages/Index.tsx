@@ -346,34 +346,6 @@ const Index = () => {
     return parts.join(" ");
   };
 
-  const speakBrowser = (text: string) => {
-    if (typeof window === "undefined" || !window.speechSynthesis) {
-      setSpeaking(false);
-      return;
-    }
-    window.speechSynthesis.cancel();
-    const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
-    sentences.forEach((s, i) => {
-      const u = new SpeechSynthesisUtterance(s.trim());
-      u.rate = 1.02;
-      u.pitch = 1;
-      if (i === sentences.length - 1) {
-        u.onend = () => {
-          setSpeaking(false);
-          setParticleTrigger(Date.now());
-        };
-      }
-    });
-    // Speak (need a second pass since onend was attached to utterances above)
-    sentences.forEach((s) => {
-      const u = new SpeechSynthesisUtterance(s.trim());
-      u.rate = 1.02;
-      u.pitch = 1;
-      window.speechSynthesis.speak(u);
-    });
-    // Attach onend to the last queued utterance properly
-  };
-
   const speakPlan = async () => {
     if (!actions.length || !biomarkers || speaking) return;
     setSpeaking(true);
