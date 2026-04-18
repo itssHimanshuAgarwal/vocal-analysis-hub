@@ -83,7 +83,7 @@ const Index = () => {
   const [tabSourceFilter, setTabSourceFilter] = useState<SourceKey | null>(null);
   const [ringSource, setRingSource] = useState<SourceKey | null>(null);
   const [briefingStarted, setBriefingStarted] = useState(false);
-  const audioElRef = useRef<HTMLAudioElement | null>(null);
+  
 
   const speechSupported = useMemo(
     () =>
