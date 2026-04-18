@@ -392,6 +392,7 @@ const Index = () => {
     setBiomarkerSource(null);
     setSignalSource(null);
     setActions([]);
+    setBriefingStarted(false);
     audioChunksRef.current = [];
     setPhase("recording");
 
