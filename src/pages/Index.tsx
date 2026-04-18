@@ -75,6 +75,7 @@ const Index = () => {
   const [hasRecorded, setHasRecorded] = useState(false);
   const [activeSources, setActiveSources] = useState<Set<SourceKey>>(new Set());
   const [speaking, setSpeaking] = useState(false);
+  const [openSource, setOpenSource] = useState<SourceKey | null>(null);
   const audioElRef = useRef<HTMLAudioElement | null>(null);
 
   const speechSupported = useMemo(
