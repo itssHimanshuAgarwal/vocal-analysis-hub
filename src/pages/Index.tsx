@@ -661,9 +661,27 @@ const Index = () => {
                     <button
                       onClick={speakPlan}
                       disabled={speaking}
-                      className="self-start rounded-full bg-green-500 px-6 py-3 text-sm font-semibold text-black transition-all duration-500 ease-out hover:scale-[1.02] hover:bg-green-400 shadow-[0_0_30px_-5px_rgba(0,212,126,0.5)] disabled:opacity-60 disabled:cursor-not-allowed"
+                      className="self-start rounded-full bg-green-500 px-6 py-3 text-sm font-semibold text-black transition-all duration-500 ease-out hover:scale-[1.02] hover:bg-green-400 shadow-[0_0_30px_-5px_rgba(0,212,126,0.5)] disabled:opacity-90 disabled:cursor-not-allowed inline-flex items-center gap-3"
                     >
-                      {speaking ? "Speaking…" : "Listen to your plan"}
+                      {speaking ? (
+                        <>
+                          <span>Gradium TTS</span>
+                          <span className="flex items-end gap-0.5 h-3" aria-hidden="true">
+                            {[0, 1, 2, 3, 4].map((i) => (
+                              <span
+                                key={i}
+                                className="w-0.5 bg-black rounded-full animate-tts-bar"
+                                style={{
+                                  height: "100%",
+                                  animationDelay: `${i * 120}ms`,
+                                }}
+                              />
+                            ))}
+                          </span>
+                        </>
+                      ) : (
+                        "Listen to your plan"
+                      )}
                     </button>
                     <SponsorBadges activated={phase === "results"} />
                   </div>
