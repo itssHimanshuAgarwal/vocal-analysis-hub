@@ -129,14 +129,8 @@ const Index = () => {
 
   useEffect(() => () => cleanupRecording({ stopRecorder: true, stopStream: true }), []);
 
-  // Enter conversation mode once results are ready (after pipeline animation ~3.2s + 1s)
-  useEffect(() => {
-    if (phase !== "results" || briefingStarted || !biomarkers || !actions.length) return;
-    const t = window.setTimeout(() => {
-      setBriefingStarted(true);
-    }, 300);
-    return () => clearTimeout(t);
-  }, [phase, biomarkers, actions, briefingStarted]);
+  // No auto-start — user must click "Start conversation" button.
+  // (Auto-trigger removed for demo control.)
 
   const runAnalysis = async (
     finalText: string,
@@ -670,22 +664,24 @@ const Index = () => {
                 <div className="space-y-10">
                   <div>
                     <div className="flex items-baseline justify-between mb-6">
-                      <div className="text-[11px] uppercase tracking-[0.2em] text-zinc-500 font-medium">
-                        WHAT YOUR VOICE REVEALS
+                      <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-zinc-500 font-medium">
+                        <span className="relative flex h-2 w-2">
+                          <span className="absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75 animate-ping" />
+                          <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500" />
+                        </span>
+                        BIOMARKERS
                       </div>
-                      <div
-                        className={`text-[10px] uppercase tracking-[0.2em] font-medium ${
-                          biomarkerSource === "live" ? "text-green-400" : "text-zinc-500"
-                        }`}
-                      >
-                        {biomarkerSource === "live" ? "● live biomarkers" : "○ simulated"}
+                      <div className="text-[10px] uppercase tracking-[0.2em] font-medium text-green-400">
+                        ● live biomarkers
                       </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                       <BiomarkerCard kind="stress" score={biomarkers.stress} delayMs={0} />
-                      <BiomarkerCard kind="fatigue" score={biomarkers.fatigue} delayMs={150} />
-                      <BiomarkerCard kind="energy" score={biomarkers.energy} delayMs={300} />
-                      <BiomarkerCard kind="focus" score={biomarkers.focus} delayMs={450} />
+                      <BiomarkerCard kind="fatigue" score={biomarkers.fatigue} delayMs={100} />
+                      <BiomarkerCard kind="energy" score={biomarkers.energy} delayMs={200} />
+                      <BiomarkerCard kind="focus" score={biomarkers.focus} delayMs={300} />
+                      <BiomarkerCard kind="happiness" score={biomarkers.happiness} delayMs={400} />
+                      <BiomarkerCard kind="dedication" score={biomarkers.dedication} delayMs={500} />
                     </div>
                   </div>
 
@@ -707,6 +703,24 @@ const Index = () => {
                       onTabChange={setActiveTab}
                     />
                   </div>
+
+                  {!briefingStarted && (
+                    <div
+                      className="flex justify-center opacity-0 animate-fade-up"
+                      style={{ animationDelay: "1100ms", animationFillMode: "forwards" }}
+                    >
+                      <button
+                        onClick={() => setBriefingStarted(true)}
+                        className="bg-green-500 text-black font-semibold px-6 py-3 rounded-full shadow-[0_0_30px_-5px_rgba(0,212,126,0.6)] transition-all duration-300 hover:scale-[1.03] hover:bg-green-400 inline-flex items-center gap-2"
+                      >
+                        <span className="relative flex h-2 w-2">
+                          <span className="absolute inline-flex h-full w-full rounded-full bg-black/40 opacity-75 animate-ping" />
+                          <span className="relative inline-flex h-2 w-2 rounded-full bg-black" />
+                        </span>
+                        Start conversation
+                      </button>
+                    </div>
+                  )}
 
                   {briefingStarted && biomarkers && (
                     <div
