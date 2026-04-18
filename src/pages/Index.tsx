@@ -6,6 +6,7 @@ import { ActionPlan } from "@/components/ActionPlan";
 import { SponsorBadges } from "@/components/SponsorBadges";
 import { Particles } from "@/components/Particles";
 import { SourcesStrip, SOURCE_FROM_SIGNAL, type SourceKey } from "@/components/SourcesStrip";
+import { SourcePanel } from "@/components/SourcePanel";
 import { MorningContextCard } from "@/components/MorningContextCard";
 import { AgentPipeline } from "@/components/AgentPipeline";
 import { generatePlan, type Action } from "@/lib/generatePlan";
