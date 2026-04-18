@@ -11,6 +11,8 @@ interface Biomarkers {
   fatigue: number;
   energy: number;
   focus: number;
+  happiness?: number;
+  dedication?: number;
 }
 
 interface CalEvent {
