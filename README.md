@@ -1,6 +1,7 @@
 # LOCKED IN
 
 **Your voice reveals what your words hide.**
+Live at https://www.locked-in.today/
 
 A voice-first productivity operating system that reads your biology and your world to give you decisions, not dashboards.
 
