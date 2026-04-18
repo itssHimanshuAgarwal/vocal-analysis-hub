@@ -2,6 +2,15 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { analyzeBiomarkers, type Biomarkers } from "@/lib/analyzeBiomarkers";
 import { BiomarkerCard } from "@/components/BiomarkerCard";
 import { TranscriptCard } from "@/components/TranscriptCard";
+import { ActionPlan } from "@/components/ActionPlan";
+import { SponsorBadges } from "@/components/SponsorBadges";
+import { Particles } from "@/components/Particles";
+import { generatePlan, type Action } from "@/lib/generatePlan";
+import { HARDCODED_SIGNALS, type Signal } from "@/lib/signals";
+import { supabase } from "@/integrations/supabase/client";
+
+// Production: Speechmatics API for medical-grade accuracy
+// Production: Gradium TTS for natural low-latency voice
 
 const MicIcon = ({ className = "" }: { className?: string }) => (
   <svg
@@ -52,7 +61,11 @@ const Index = () => {
   const [countdown, setCountdown] = useState(15);
   const [transcript, setTranscript] = useState("");
   const [biomarkers, setBiomarkers] = useState<Biomarkers | null>(null);
+  const [biomarkerSource, setBiomarkerSource] = useState<"live" | "simulated" | null>(null);
+  const [actions, setActions] = useState<Action[]>([]);
+  const [signalSource, setSignalSource] = useState<"live" | "fallback" | null>(null);
   const [fallbackText, setFallbackText] = useState("");
+  const [particleTrigger, setParticleTrigger] = useState(0);
 
   const speechSupported = useMemo(
     () =>
@@ -65,13 +78,14 @@ const Index = () => {
   );
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
   const streamRef = useRef<MediaStream | null>(null);
   const recognitionRef = useRef<any>(null);
   const timerRef = useRef<number | null>(null);
   const autoStopRef = useRef<number | null>(null);
   const transcriptRef = useRef("");
 
-  const cleanupRecording = () => {
+  const cleanupRecording = (opts: { stopRecorder?: boolean; stopStream?: boolean } = { stopRecorder: true, stopStream: true }) => {
     if (timerRef.current) {
       clearInterval(timerRef.current);
       timerRef.current = null;
@@ -81,25 +95,123 @@ const Index = () => {
       autoStopRef.current = null;
     }
     try {
-      mediaRecorderRef.current?.state !== "inactive" &&
-        mediaRecorderRef.current?.stop();
-    } catch {}
-    try {
       recognitionRef.current?.stop();
     } catch {}
-    streamRef.current?.getTracks().forEach((t) => t.stop());
-    streamRef.current = null;
+    if (opts.stopRecorder) {
+      try {
+        mediaRecorderRef.current?.state !== "inactive" &&
+          mediaRecorderRef.current?.stop();
+      } catch {}
+    }
+    if (opts.stopStream) {
+      streamRef.current?.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+    }
   };
 
-  useEffect(() => () => cleanupRecording(), []);
+  useEffect(() => () => cleanupRecording({ stopRecorder: true, stopStream: true }), []);
 
-  const finishRecording = (overrideTranscript?: string) => {
-    cleanupRecording();
+  const runAnalysis = async (
+    finalText: string,
+    audioBlob: Blob | null,
+  ): Promise<{ bio: Biomarkers; bioSource: "live" | "simulated"; signals: Signal[]; sigSource: "live" | "fallback" }> => {
+    const fallbackBio = analyzeBiomarkers(finalText);
+
+    const thymiaP: Promise<{ bio: Biomarkers; source: "live" | "simulated" }> = (async () => {
+      if (!audioBlob || audioBlob.size < 100) return { bio: fallbackBio, source: "simulated" as const };
+      try {
+        const fd = new FormData();
+        fd.append("audio", audioBlob, "voice.webm");
+        const { data, error } = await supabase.functions.invoke("analyze-biomarkers", { body: fd });
+        if (error || !data?.ok || !data?.biomarkers) {
+          return { bio: fallbackBio, source: "simulated" as const };
+        }
+        return { bio: data.biomarkers as Biomarkers, source: "live" as const };
+      } catch (e) {
+        console.warn("thymia invoke failed", e);
+        return { bio: fallbackBio, source: "simulated" as const };
+      }
+    })();
+
+    const tinyfishP: Promise<{ signals: Signal[]; source: "live" | "fallback" }> = (async () => {
+      if (!finalText.trim()) return { signals: HARDCODED_SIGNALS, source: "fallback" as const };
+      try {
+        const { data, error } = await supabase.functions.invoke("fetch-signals", {
+          body: { transcript: finalText },
+        });
+        if (error || !data?.ok || !Array.isArray(data?.signals) || data.signals.length === 0) {
+          return { signals: HARDCODED_SIGNALS, source: "fallback" as const };
+        }
+        return { signals: [...(data.signals as Signal[]), ...HARDCODED_SIGNALS], source: "live" as const };
+      } catch (e) {
+        console.warn("tinyfish invoke failed", e);
+        return { signals: HARDCODED_SIGNALS, source: "fallback" as const };
+      }
+    })();
+
+    const [t, f] = await Promise.all([thymiaP, tinyfishP]);
+    return { bio: t.bio, bioSource: t.source, signals: f.signals, sigSource: f.source };
+  };
+
+  const finishRecording = async (overrideTranscript?: string) => {
+    // Stop timers + speech recognition, but keep MediaRecorder alive long enough to capture final blob.
+    cleanupRecording({ stopRecorder: false, stopStream: false });
     const finalText = overrideTranscript ?? transcriptRef.current;
+    if (overrideTranscript !== undefined) {
+      setTranscript(overrideTranscript);
+      transcriptRef.current = overrideTranscript;
+    }
+
     setBiomarkers(analyzeBiomarkers(finalText));
-    if (overrideTranscript !== undefined) setTranscript(overrideTranscript);
     setPhase("scanning");
-    window.setTimeout(() => setPhase("results"), 2500);
+
+    const audioBlob = await new Promise<Blob | null>((resolve) => {
+      const mr = mediaRecorderRef.current;
+      if (!mr || mr.state === "inactive") {
+        resolve(audioChunksRef.current.length ? new Blob(audioChunksRef.current, { type: "audio/webm" }) : null);
+        return;
+      }
+      mr.addEventListener(
+        "stop",
+        () => resolve(new Blob(audioChunksRef.current, { type: "audio/webm" })),
+        { once: true },
+      );
+      try { mr.stop(); } catch { resolve(null); }
+    });
+
+    // Now safe to release the mic stream.
+    streamRef.current?.getTracks().forEach((t) => t.stop());
+    streamRef.current = null;
+
+    const minScan = new Promise((r) => setTimeout(r, 2500));
+    const [{ bio, bioSource, signals, sigSource }] = await Promise.all([
+      runAnalysis(finalText, audioBlob),
+      minScan,
+    ]);
+
+    setBiomarkers(bio);
+    setBiomarkerSource(bioSource);
+    setSignalSource(sigSource);
+    setActions(generatePlan(finalText, bio, signals));
+    setPhase("results");
+    setParticleTrigger(Date.now());
+  };
+
+  const speakPlan = () => {
+    if (!actions.length || typeof window === "undefined" || !window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+    const intro = new SpeechSynthesisUtterance("Here is your plan, locked in.");
+    intro.rate = 1.05;
+    window.speechSynthesis.speak(intro);
+    actions.forEach((a, i) => {
+      const u = new SpeechSynthesisUtterance(`${a.time}. ${a.text}.`);
+      u.rate = 1.0;
+      u.pitch = 1.0;
+      if (i === actions.length - 1) {
+        u.onend = () => setParticleTrigger(Date.now());
+      }
+      window.speechSynthesis.speak(u);
+    });
   };
 
   const startRecording = async () => {
@@ -107,12 +219,19 @@ const Index = () => {
     transcriptRef.current = "";
     setCountdown(15);
     setBiomarkers(null);
+    setBiomarkerSource(null);
+    setSignalSource(null);
+    setActions([]);
+    audioChunksRef.current = [];
     setPhase("recording");
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
       const mr = new MediaRecorder(stream);
+      mr.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) audioChunksRef.current.push(e.data);
+      };
       mediaRecorderRef.current = mr;
       mr.start();
     } catch (err) {
@@ -328,10 +447,19 @@ const Index = () => {
               </div>
             ) : (
               biomarkers && (
-                <div className="space-y-8">
+                <div className="space-y-10">
                   <div>
-                    <div className="text-[11px] uppercase tracking-[0.2em] text-zinc-500 mb-6 font-medium">
-                      WHAT YOUR VOICE REVEALS
+                    <div className="flex items-baseline justify-between mb-6">
+                      <div className="text-[11px] uppercase tracking-[0.2em] text-zinc-500 font-medium">
+                        WHAT YOUR VOICE REVEALS
+                      </div>
+                      <div
+                        className={`text-[10px] uppercase tracking-[0.2em] font-medium ${
+                          biomarkerSource === "live" ? "text-green-400" : "text-zinc-500"
+                        }`}
+                      >
+                        {biomarkerSource === "live" ? "● live biomarkers" : "○ simulated"}
+                      </div>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <BiomarkerCard kind="stress" score={biomarkers.stress} delayMs={0} />
@@ -340,13 +468,40 @@ const Index = () => {
                       <BiomarkerCard kind="focus" score={biomarkers.focus} delayMs={450} />
                     </div>
                   </div>
+
                   <TranscriptCard transcript={transcript} delayMs={600} />
+
+                  {actions.length > 0 && (
+                    <ActionPlan actions={actions} delayMs={900} />
+                  )}
+
+                  {/* Bottom controls */}
+                  <div
+                    className="mt-8 pt-6 border-t border-white/[0.06] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 opacity-0 animate-fade-up"
+                    style={{ animationDelay: "1700ms" }}
+                  >
+                    <button
+                      onClick={speakPlan}
+                      className="self-start rounded-full bg-green-500 px-6 py-3 text-sm font-semibold text-black transition-all duration-500 ease-out hover:scale-[1.02] hover:bg-green-400 shadow-[0_0_30px_-5px_rgba(0,212,126,0.5)]"
+                    >
+                      Listen to your plan
+                    </button>
+                    <SponsorBadges activated={phase === "results"} />
+                  </div>
+
+                  {signalSource && (
+                    <div className="text-[10px] text-zinc-600 text-right">
+                      signals: {signalSource === "live" ? "TinyFish live feed" : "fallback intelligence pool"}
+                    </div>
+                  )}
                 </div>
               )
             )}
           </section>
         )}
       </div>
+
+      <Particles trigger={particleTrigger} />
     </main>
   );
 };
