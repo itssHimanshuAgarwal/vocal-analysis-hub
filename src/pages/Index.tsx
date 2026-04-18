@@ -390,16 +390,16 @@ const Index = () => {
       };
       audio.onerror = () => {
         URL.revokeObjectURL(url);
-        speakWithBrowser();
+        speakWithBrowser(text);
       };
       try {
         await audio.play();
       } catch (e) {
         console.warn("audio play failed, falling back", e);
-        speakWithBrowser();
+        speakWithBrowser(text);
       }
     } else {
-      speakWithBrowser();
+      speakWithBrowser(text);
     }
   };
 
