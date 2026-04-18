@@ -710,6 +710,15 @@ const Index = () => {
                     />
                   </div>
 
+                  {briefingStarted && (
+                    <div
+                      className="opacity-0 animate-fade-up"
+                      style={{ animationDelay: "100ms", animationFillMode: "forwards" }}
+                    >
+                      <BriefingBar speaking={speaking} onAsk={askFollowUp} />
+                    </div>
+                  )}
+
                   {/* Bottom controls */}
                   <div
                     className="mt-8 pt-6 border-t border-white/[0.06] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 opacity-0 animate-fade-up"
