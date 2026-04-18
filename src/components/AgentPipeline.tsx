@@ -327,12 +327,27 @@ export const AgentPipeline = ({ phase }: Props) => {
     return list;
   }, [step]);
 
+  const status = useMemo(() => {
+    if (step < 1) return "capturing voice...";
+    if (step < 2) return "analyzing biomarkers...";
+    if (step < 3) return "reading calendar...";
+    if (step < 12) return "scanning 12 sources...";
+    if (step < 14) return "generating your plan...";
+    return "ready";
+  }, [step]);
+
   return (
     <div>
-      <div className="text-[11px] uppercase tracking-[0.2em] text-zinc-500 mb-4 font-medium">
-        AGENT PIPELINE
+      <div className="flex items-baseline justify-between mb-4">
+        <div className="text-[11px] uppercase tracking-[0.2em] text-zinc-500 font-medium">
+          AGENT PIPELINE
+        </div>
+        <div className={`text-[11px] tracking-wider font-mono ${step >= 15 ? "text-green-400" : "text-zinc-400"}`}>
+          {status}
+        </div>
       </div>
       <div className="bg-[#111113] rounded-2xl border border-white/[0.06] p-2 h-[400px] overflow-hidden">
+
         <ReactFlow
           nodes={nodes}
           edges={edges}
