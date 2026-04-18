@@ -600,7 +600,7 @@ const Index = () => {
           {!speechSupported && phase !== "recording" && phase !== "scanning" && (
             <div className="mt-10 w-full max-w-xl">
               <div className="text-[11px] uppercase tracking-[0.2em] text-zinc-500 mb-3 text-left">
-                speech recognition unavailable — type instead
+                speech recognition unavailable, type instead
               </div>
               <div className="flex gap-2">
                 <input
