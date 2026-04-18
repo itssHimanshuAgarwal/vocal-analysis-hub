@@ -31,9 +31,9 @@ const NEXT_STEPS: NextStep[] = [
     source: "PODCAST",
   },
   {
-    title: "Attend AI Founders Drinks tonight",
-    why: "Your fatigue is moderate but your calendar is clear after 7pm. Low-energy networking recharges founder energy.",
-    action: "Shoreditch Studios, 7pm. 43 RSVPs. Goal: have 2 genuine conversations, no pitching. Home by 9.",
+    title: "Attend Founders Gatherings (MindPal)",
+    why: "Curated room of 5–20 founders, pre-seed to Series A. Your energy is good enough for high-signal networking, and the structured founder rounds mean no awkward small talk.",
+    action: "Friday, 4–6pm PT, San Francisco. Hosted by Kyosuke Togami (Transpose Platform) + Chris Parjaszewski (MindPal). Prep: startup in 1 sentence, ICP in 1 sentence, GTM in 2, biggest bottleneck in 15s. Request to join on Luma.",
     source: "LUMA",
   },
   {
