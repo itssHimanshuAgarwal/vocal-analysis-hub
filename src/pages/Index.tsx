@@ -566,7 +566,7 @@ const Index = () => {
         {/* SOURCES (between hero and results, only after first recording) */}
         {hasRecorded && (
           <section className="mt-12">
-            <SourcesStrip active={activeSources} />
+            <SourcesStrip active={activeSources} onSelect={(k) => setOpenSource(k)} />
           </section>
         )}
 
