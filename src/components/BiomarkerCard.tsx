@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-type Kind = "stress" | "fatigue" | "energy" | "focus";
+type Kind = "stress" | "fatigue" | "energy" | "focus" | "happiness" | "dedication";
 
 const config: Record<
   Kind,
@@ -30,6 +30,18 @@ const config: Record<
     gradient: "bg-gradient-to-r from-purple-600 to-purple-400",
     glow: "rgba(124,58,237,0.6)",
   },
+  happiness: {
+    label: "HAPPINESS",
+    color: "text-yellow-400",
+    gradient: "bg-gradient-to-r from-yellow-600 to-yellow-400",
+    glow: "rgba(234,179,8,0.6)",
+  },
+  dedication: {
+    label: "DEDICATION",
+    color: "text-cyan-400",
+    gradient: "bg-gradient-to-r from-cyan-600 to-cyan-400",
+    glow: "rgba(6,182,212,0.6)",
+  },
 };
 
 const insightFor = (kind: Kind, score: number): string | null => {
@@ -41,6 +53,10 @@ const insightFor = (kind: Kind, score: number): string | null => {
     return "low reserves, protect your peak hours";
   if (kind === "focus" && score < 40)
     return "scattered, single-task mode recommended";
+  if (kind === "happiness" && score > 75)
+    return "strong positive affect detected";
+  if (kind === "dedication" && score > 75)
+    return "high commitment signal in your voice";
   return null;
 };
 
