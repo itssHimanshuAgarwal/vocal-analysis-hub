@@ -1,4 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { analyzeBiomarkers, type Biomarkers } from "@/lib/analyzeBiomarkers";
+import { BiomarkerCard } from "@/components/BiomarkerCard";
+import { TranscriptCard } from "@/components/TranscriptCard";
 
 const MicIcon = ({ className = "" }: { className?: string }) => (
   <svg
@@ -48,12 +51,25 @@ const Index = () => {
   const [phase, setPhase] = useState<Phase>("idle");
   const [countdown, setCountdown] = useState(15);
   const [transcript, setTranscript] = useState("");
+  const [biomarkers, setBiomarkers] = useState<Biomarkers | null>(null);
+  const [fallbackText, setFallbackText] = useState("");
+
+  const speechSupported = useMemo(
+    () =>
+      typeof window !== "undefined" &&
+      Boolean(
+        (window as any).webkitSpeechRecognition ||
+          (window as any).SpeechRecognition
+      ),
+    []
+  );
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const recognitionRef = useRef<any>(null);
   const timerRef = useRef<number | null>(null);
   const autoStopRef = useRef<number | null>(null);
+  const transcriptRef = useRef("");
 
   const cleanupRecording = () => {
     if (timerRef.current) {
@@ -77,15 +93,20 @@ const Index = () => {
 
   useEffect(() => () => cleanupRecording(), []);
 
-  const finishRecording = () => {
+  const finishRecording = (overrideTranscript?: string) => {
     cleanupRecording();
+    const finalText = overrideTranscript ?? transcriptRef.current;
+    setBiomarkers(analyzeBiomarkers(finalText));
+    if (overrideTranscript !== undefined) setTranscript(overrideTranscript);
     setPhase("scanning");
     window.setTimeout(() => setPhase("results"), 2500);
   };
 
   const startRecording = async () => {
     setTranscript("");
+    transcriptRef.current = "";
     setCountdown(15);
+    setBiomarkers(null);
     setPhase("recording");
 
     try {
@@ -112,6 +133,7 @@ const Index = () => {
           for (let i = 0; i < e.results.length; i++) {
             text += e.results[i][0].transcript;
           }
+          transcriptRef.current = text;
           setTranscript(text);
         };
         rec.start();
@@ -125,7 +147,13 @@ const Index = () => {
       setCountdown((c) => (c > 0 ? c - 1 : 0));
     }, 1000);
 
-    autoStopRef.current = window.setTimeout(finishRecording, 15000);
+    autoStopRef.current = window.setTimeout(() => finishRecording(), 15000);
+  };
+
+  const handleFallbackSubmit = () => {
+    if (!fallbackText.trim()) return;
+    finishRecording(fallbackText.trim());
+    setFallbackText("");
   };
 
   const handleMicClick = () => {
@@ -236,6 +264,30 @@ const Index = () => {
               "{transcript}"
             </p>
           )}
+
+          {/* Typed fallback when SpeechRecognition isn't supported */}
+          {!speechSupported && phase !== "recording" && phase !== "scanning" && (
+            <div className="mt-10 w-full max-w-xl">
+              <div className="text-[11px] uppercase tracking-[0.2em] text-zinc-500 mb-3 text-left">
+                speech recognition unavailable — type instead
+              </div>
+              <div className="flex gap-2">
+                <input
+                  value={fallbackText}
+                  onChange={(e) => setFallbackText(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleFallbackSubmit()}
+                  placeholder="how are you feeling right now?"
+                  className="flex-1 rounded-full border border-white/[0.06] bg-[#111113] px-5 py-3 text-sm text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:border-[#00D47E]/40 focus:ring-2 focus:ring-[#00D47E]/20 transition-all duration-500"
+                />
+                <button
+                  onClick={handleFallbackSubmit}
+                  className="rounded-full bg-gradient-to-br from-green-500 to-emerald-600 px-6 py-3 text-sm font-semibold text-white transition-all duration-500 ease-out hover:scale-[1.02]"
+                >
+                  analyze
+                </button>
+              </div>
+            </div>
+          )}
         </section>
 
         {/* RESULTS */}
@@ -275,9 +327,22 @@ const Index = () => {
                 </div>
               </div>
             ) : (
-              <div className="rounded-2xl border border-white/[0.06] bg-[#111113] p-10 text-center">
-                <p className="text-zinc-600">your results will appear here</p>
-              </div>
+              biomarkers && (
+                <div className="space-y-8">
+                  <div>
+                    <div className="text-[11px] uppercase tracking-[0.2em] text-zinc-500 mb-6 font-medium">
+                      WHAT YOUR VOICE REVEALS
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <BiomarkerCard kind="stress" score={biomarkers.stress} delayMs={0} />
+                      <BiomarkerCard kind="fatigue" score={biomarkers.fatigue} delayMs={150} />
+                      <BiomarkerCard kind="energy" score={biomarkers.energy} delayMs={300} />
+                      <BiomarkerCard kind="focus" score={biomarkers.focus} delayMs={450} />
+                    </div>
+                  </div>
+                  <TranscriptCard transcript={transcript} delayMs={600} />
+                </div>
+              )
             )}
           </section>
         )}
