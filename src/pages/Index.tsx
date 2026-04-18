@@ -231,7 +231,8 @@ const Index = () => {
       }
     })();
 
-    const minScan = new Promise((r) => setTimeout(r, 2500));
+    // Force a longer "thinking" window so users feel the API working.
+    const minScan = new Promise((r) => setTimeout(r, 4000));
     const [analysisResult, smTranscript] = await Promise.all([
       runAnalysis(finalText, audioBlob),
       speechmaticsP,
@@ -497,22 +498,7 @@ const Index = () => {
             your voice reveals what your words hide
           </p>
 
-          <div className="h-8" />
-
-          {/* Morning Check-in toggle */}
-          <button
-            onClick={() => setMorning((m) => !m)}
-            aria-pressed={morning}
-            className={`text-xs px-4 py-1.5 rounded-full font-medium transition-all duration-500 ease-out hover:scale-[1.02] ${
-              morning
-                ? "bg-green-500/10 border border-green-500/20 text-green-400 shadow-[0_0_18px_-4px_rgba(0,212,126,0.5)]"
-                : "bg-zinc-800 text-zinc-500 border border-transparent"
-            }`}
-          >
-            {morning ? "● Morning Check-in" : "○ Morning Check-in"}
-          </button>
-
-          <div className="h-6" />
+          <div className="h-2" />
 
           {/* Mic button */}
           <button
@@ -694,7 +680,7 @@ const Index = () => {
                     <AgentPipeline phase={phase} />
                   </div>
 
-                  {morning && <MorningContextCard delayMs={900} />}
+                  
 
                   <div id="plan-tabs">
                     <PlanTabs
