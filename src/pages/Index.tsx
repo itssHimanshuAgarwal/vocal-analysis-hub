@@ -77,7 +77,7 @@ const Index = () => {
   const [activeSources, setActiveSources] = useState<Set<SourceKey>>(new Set());
   const [speaking, setSpeaking] = useState(false);
   const [openSource, setOpenSource] = useState<SourceKey | null>(null);
-  const [activeTab, setActiveTab] = useState<"plan" | "signals" | "context">("plan");
+  const [activeTab, setActiveTab] = useState<"plan" | "signals" | "context" | "signalit">("plan");
   const [tabSourceFilter, setTabSourceFilter] = useState<SourceKey | null>(null);
   const [ringSource, setRingSource] = useState<SourceKey | null>(null);
   const audioElRef = useRef<HTMLAudioElement | null>(null);
