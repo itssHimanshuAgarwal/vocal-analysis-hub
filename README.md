@@ -59,7 +59,7 @@ Your Voice
 
 ## Architecture
 
-- **Frontend:** React + Vite + TypeScript + Tailwind (built with Lovable)
+- **Frontend:** React + Vite + TypeScript + Tailwind 
 - **Voice:** Browser MediaRecorder + Web Speech API with Gradium endpoints wired
 - **Biomarkers:** Thymia Sentinel (Helios wellness + Psyche affect models) via Python server on Render
 - **Intelligence:** SignalIT Supabase backend (12 agents, 9 database tables, live cached data)
