@@ -120,6 +120,7 @@ export default {
         "fade-up": "fade-up 0.8s ease-out both",
         "scan-sweep": "scan-sweep 2.5s ease-in-out infinite",
         "title-glow": "title-glow 4s ease-in-out infinite",
+        "shimmer": "shimmer 1.4s ease-out both",
       },
     },
   },
