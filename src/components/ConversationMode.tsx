@@ -4,6 +4,9 @@ import type { Action } from "@/lib/generatePlan";
 import type { CalendarEvent } from "@/services/calendarClient";
 import { fetchTomorrowEvents } from "@/services/calendarClient";
 import { buildOpener, buildReply, detectIntent } from "@/lib/conversationReply";
+import { supabase } from "@/integrations/supabase/client";
+
+type ChatTurn = { role: "user" | "assistant"; content: string };
 
 type Msg = { role: "user" | "agent"; text: string; id: number };
 type Status = "speaking" | "listening" | "idle";
