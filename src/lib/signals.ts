@@ -2,6 +2,7 @@ export type Signal = {
   text: string;
   source: string;
   topics: string[];
+  live?: boolean;
 };
 
 export const HARDCODED_SIGNALS: Signal[] = [
