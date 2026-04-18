@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { fetchTomorrowEvents, type CalendarEvent } from "@/services/calendarClient";
 
-type TabId = "plan" | "signalit";
+type TabId = "plan" | "signalit" | "next";
 
 interface Props {
   delayMs: number;
@@ -12,8 +12,57 @@ interface Props {
 
 const TABS: Array<{ id: TabId; label: string }> = [
   { id: "plan", label: "Tomorrow's Plan" },
+  { id: "next", label: "🚀 Next Steps" },
   { id: "signalit", label: "Signals" },
 ];
+
+type NextStep = {
+  title: string;
+  why: string;
+  action: string;
+  source: "PODCAST" | "LUMA" | "WHATSAPP" | "GITHUB" | "NEWSLETTER";
+};
+
+const NEXT_STEPS: NextStep[] = [
+  {
+    title: "Prep for your investor call with Greg",
+    why: "You have 'meet Greg for seed funding' at 4pm tomorrow. Your stress is elevated — preparation will reduce anxiety.",
+    action: "Listen to 20VC Episode: 'How to close a Series B in 2 weeks' by Harry Stebbings before the call. Key insight: lead with market size, not product.",
+    source: "PODCAST",
+  },
+  {
+    title: "Attend AI Founders Drinks tonight",
+    why: "Your fatigue is moderate but your calendar is clear after 7pm. Low-energy networking recharges founder energy.",
+    action: "Shoreditch Studios, 7pm. 43 RSVPs. Goal: have 2 genuine conversations, no pitching. Home by 9.",
+    source: "LUMA",
+  },
+  {
+    title: "Reply to Gary about the investor deck",
+    why: "Gary messaged last night. Unresolved messages increase cognitive load — your focus score is already low.",
+    action: "Send a 2-line update: 'Deck is 80% done. Will share tomorrow noon.' Takes 30 seconds, clears your mental queue.",
+    source: "WHATSAPP",
+  },
+  {
+    title: "Check this trending GitHub repo",
+    why: "An open-source voice agent framework got 1.2K stars in 3 days. Directly relevant to what you're building.",
+    action: "Star it tonight. Read the README tomorrow during your rest block. Could save you weeks of infra work.",
+    source: "GITHUB",
+  },
+  {
+    title: "Read Morning Brew's UK funding report",
+    why: "UK startup funding hit a 3-year high. Use this data point in your investor deck — it validates your timing.",
+    action: "2 minute read. Pull the headline stat into slide 3 of your deck.",
+    source: "NEWSLETTER",
+  },
+];
+
+const SOURCE_COLORS: Record<NextStep["source"], string> = {
+  PODCAST: "bg-purple-500/10 text-purple-400 border-purple-500/20",
+  LUMA: "bg-pink-500/10 text-pink-400 border-pink-500/20",
+  WHATSAPP: "bg-green-500/10 text-green-400 border-green-500/20",
+  GITHUB: "bg-zinc-500/10 text-zinc-300 border-zinc-500/20",
+  NEWSLETTER: "bg-amber-500/10 text-amber-400 border-amber-500/20",
+};
 
 const formatTime = (iso: string) => {
   const d = new Date(iso);
@@ -128,6 +177,8 @@ export const PlanTabs = ({ delayMs, activeTab, onTabChange }: Props) => {
                 active
                   ? t.id === "signalit"
                     ? "bg-purple-500/10 text-purple-400 border border-purple-500/20"
+                    : t.id === "next"
+                    ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
                     : "bg-green-500/10 text-green-400 border border-green-500/20"
                   : "bg-zinc-800/50 text-zinc-500 border border-transparent hover:text-zinc-300"
               }`}
