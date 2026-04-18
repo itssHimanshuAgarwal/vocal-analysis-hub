@@ -7,6 +7,7 @@ import { SponsorBadges } from "@/components/SponsorBadges";
 import { Particles } from "@/components/Particles";
 import { SourcesStrip, SOURCE_FROM_SIGNAL, type SourceKey } from "@/components/SourcesStrip";
 import { MorningContextCard } from "@/components/MorningContextCard";
+import { AgentPipeline } from "@/components/AgentPipeline";
 import { generatePlan, type Action } from "@/lib/generatePlan";
 import { HARDCODED_SIGNALS, type Signal } from "@/lib/signals";
 import { supabase } from "@/integrations/supabase/client";
@@ -611,7 +612,14 @@ const Index = () => {
 
                   <TranscriptCard transcript={transcript} delayMs={600} />
 
-                  {morning && <MorningContextCard delayMs={750} />}
+                  <div
+                    className="opacity-0 animate-fade-up"
+                    style={{ animationDelay: "750ms", animationFillMode: "forwards" }}
+                  >
+                    <AgentPipeline phase={phase} />
+                  </div>
+
+                  {morning && <MorningContextCard delayMs={900} />}
 
                   {actions.length > 0 && (
                     <ActionPlan actions={actions} delayMs={900} />
