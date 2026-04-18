@@ -104,6 +104,10 @@ export default {
           "0%, 100%": { textShadow: "0 0 24px rgba(0,212,126,0.25)" },
           "50%": { textShadow: "0 0 40px rgba(0,212,126,0.45)" },
         },
+        "shimmer": {
+          "0%": { transform: "translateX(-120%)" },
+          "100%": { transform: "translateX(220%)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
