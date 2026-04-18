@@ -264,6 +264,30 @@ const Index = () => {
               "{transcript}"
             </p>
           )}
+
+          {/* Typed fallback when SpeechRecognition isn't supported */}
+          {!speechSupported && phase !== "recording" && phase !== "scanning" && (
+            <div className="mt-10 w-full max-w-xl">
+              <div className="text-[11px] uppercase tracking-[0.2em] text-zinc-500 mb-3 text-left">
+                speech recognition unavailable — type instead
+              </div>
+              <div className="flex gap-2">
+                <input
+                  value={fallbackText}
+                  onChange={(e) => setFallbackText(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleFallbackSubmit()}
+                  placeholder="how are you feeling right now?"
+                  className="flex-1 rounded-full border border-white/[0.06] bg-[#111113] px-5 py-3 text-sm text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:border-[#00D47E]/40 focus:ring-2 focus:ring-[#00D47E]/20 transition-all duration-500"
+                />
+                <button
+                  onClick={handleFallbackSubmit}
+                  className="rounded-full bg-gradient-to-br from-green-500 to-emerald-600 px-6 py-3 text-sm font-semibold text-white transition-all duration-500 ease-out hover:scale-[1.02]"
+                >
+                  analyze
+                </button>
+              </div>
+            </div>
+          )}
         </section>
 
         {/* RESULTS */}
@@ -303,9 +327,22 @@ const Index = () => {
                 </div>
               </div>
             ) : (
-              <div className="rounded-2xl border border-white/[0.06] bg-[#111113] p-10 text-center">
-                <p className="text-zinc-600">your results will appear here</p>
-              </div>
+              biomarkers && (
+                <div className="space-y-8">
+                  <div>
+                    <div className="text-[11px] uppercase tracking-[0.2em] text-zinc-500 mb-6 font-medium">
+                      WHAT YOUR VOICE REVEALS
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <BiomarkerCard kind="stress" score={biomarkers.stress} delayMs={0} />
+                      <BiomarkerCard kind="fatigue" score={biomarkers.fatigue} delayMs={150} />
+                      <BiomarkerCard kind="energy" score={biomarkers.energy} delayMs={300} />
+                      <BiomarkerCard kind="focus" score={biomarkers.focus} delayMs={450} />
+                    </div>
+                  </div>
+                  <TranscriptCard transcript={transcript} delayMs={600} />
+                </div>
+              )
             )}
           </section>
         )}
