@@ -214,6 +214,38 @@ export const PlanTabs = ({ delayMs, activeTab, onTabChange }: Props) => {
           </div>
         </div>
       )}
+      {activeTab === "next" && (
+        <div>
+          <div className="text-[11px] uppercase tracking-[0.2em] text-zinc-500 mb-4 font-medium">
+            Next Steps
+          </div>
+          <div>
+            {NEXT_STEPS.map((step, i) => (
+              <div
+                key={i}
+                className="bg-[#111113] p-5 rounded-2xl border border-white/[0.06] mb-3"
+              >
+                <div className="flex items-start justify-between gap-3 mb-3">
+                  <h3 className="text-base font-medium text-white">{step.title}</h3>
+                  <span
+                    className={`shrink-0 text-[10px] uppercase tracking-wider px-2 py-1 rounded-full border font-medium ${SOURCE_COLORS[step.source]}`}
+                  >
+                    {step.source}
+                  </span>
+                </div>
+                <div className="text-xs text-zinc-400 mb-2">
+                  <span className="font-semibold text-zinc-500">WHY: </span>
+                  {step.why}
+                </div>
+                <div className="text-sm text-green-400">
+                  <span className="font-semibold text-green-500">ACTION: </span>
+                  {step.action}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
