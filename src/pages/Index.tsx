@@ -245,7 +245,7 @@ const Index = () => {
     setParticleTrigger(Date.now());
   };
 
-  const speakPlan = () => {
+  const speakWithBrowser = () => {
     if (!actions.length || typeof window === "undefined" || !window.speechSynthesis) return;
     window.speechSynthesis.cancel();
     const intro = new SpeechSynthesisUtterance("Here is your plan, locked in.");
@@ -253,13 +253,83 @@ const Index = () => {
     window.speechSynthesis.speak(intro);
     actions.forEach((a, i) => {
       const u = new SpeechSynthesisUtterance(`${a.time}. ${a.text}.`);
-      u.rate = 1.0;
-      u.pitch = 1.0;
       if (i === actions.length - 1) {
-        u.onend = () => setParticleTrigger(Date.now());
+        u.onend = () => {
+          setSpeaking(false);
+          setParticleTrigger(Date.now());
+        };
       }
       window.speechSynthesis.speak(u);
     });
+  };
+
+  const buildPlanText = () =>
+    [
+      "Here is your plan, locked in.",
+      ...actions.map((a) => `${a.time}. ${a.text}.`),
+    ].join(" ");
+
+  const speakPlan = async () => {
+    if (!actions.length || speaking) return;
+    setSpeaking(true);
+
+    // Stop any existing playback.
+    if (audioElRef.current) {
+      audioElRef.current.pause();
+      audioElRef.current.src = "";
+      audioElRef.current = null;
+    }
+    if (typeof window !== "undefined" && window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
+
+    const text = buildPlanText();
+
+    // Race Gradium edge function against a 5s timeout — fall back to browser TTS.
+    const gradiumP: Promise<Blob | null> = (async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke("speak-plan", {
+          body: { text },
+        });
+        if (error) {
+          console.warn("gradium invoke error", error);
+          return null;
+        }
+        if (data instanceof Blob) return data.size > 0 ? data : null;
+        // Some clients return ArrayBuffer
+        if (data instanceof ArrayBuffer) return new Blob([data], { type: "audio/mpeg" });
+        return null;
+      } catch (e) {
+        console.warn("gradium failed", e);
+        return null;
+      }
+    })();
+
+    const timeoutP = new Promise<null>((r) => setTimeout(() => r(null), 5000));
+    const audioBlob = await Promise.race([gradiumP, timeoutP]);
+
+    if (audioBlob) {
+      const url = URL.createObjectURL(audioBlob);
+      const audio = new Audio(url);
+      audioElRef.current = audio;
+      audio.onended = () => {
+        setSpeaking(false);
+        setParticleTrigger(Date.now());
+        URL.revokeObjectURL(url);
+      };
+      audio.onerror = () => {
+        URL.revokeObjectURL(url);
+        speakWithBrowser();
+      };
+      try {
+        await audio.play();
+      } catch (e) {
+        console.warn("audio play failed, falling back", e);
+        speakWithBrowser();
+      }
+    } else {
+      speakWithBrowser();
+    }
   };
 
   const startRecording = async () => {
