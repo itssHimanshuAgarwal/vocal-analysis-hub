@@ -270,15 +270,16 @@ const Index = () => {
     setParticleTrigger(Date.now());
   };
 
-  const speakWithBrowser = () => {
-    if (!actions.length || typeof window === "undefined" || !window.speechSynthesis) return;
+  const speakWithBrowser = (text: string) => {
+    if (typeof window === "undefined" || !window.speechSynthesis) return;
     window.speechSynthesis.cancel();
-    const intro = new SpeechSynthesisUtterance("Here is your plan, locked in.");
-    intro.rate = 1.05;
-    window.speechSynthesis.speak(intro);
-    actions.forEach((a, i) => {
-      const u = new SpeechSynthesisUtterance(`${a.time}. ${a.text}.`);
-      if (i === actions.length - 1) {
+    // Split into sentences for more natural pacing
+    const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
+    sentences.forEach((s, i) => {
+      const u = new SpeechSynthesisUtterance(s.trim());
+      u.rate = 1.02;
+      u.pitch = 1;
+      if (i === sentences.length - 1) {
         u.onend = () => {
           setSpeaking(false);
           setParticleTrigger(Date.now());
@@ -288,17 +289,62 @@ const Index = () => {
     });
   };
 
-  const buildPlanText = () =>
-    [
-      "Here is your plan, locked in.",
-      ...actions.map((a) => `${a.time}. ${a.text}.`),
-    ].join(" ");
+  const buildResponse = async (): Promise<string> => {
+    if (!biomarkers) return "";
+    let r = "";
+
+    // Opening based on biomarkers
+    if (biomarkers.stress > 60) r += "Hey. I can hear the stress in your voice. Let's fix your day. ";
+    else if (biomarkers.fatigue > 60) r += "Morning. You sound tired. I've adjusted everything around your energy. ";
+    else r += "Morning. You sound good today. Here's what I've got for you. ";
+
+    // Calendar context (demo-stable)
+    r += "You have 3 meetings today. Your standup is at 10, investor call with Balderton at 2, and team sync at 4. ";
+
+    // Pull live WhatsApp + Luma names in parallel
+    const [waList, lumaList] = await Promise.all([
+      fetchWhatsappRecent(2).catch(() => []),
+      fetchLumaUpcoming(1).catch(() => []),
+    ]);
+
+    if (waList.length >= 2) {
+      const a = waList[0].sender;
+      const b = waList[1].sender;
+      r += `${a} messaged about ${waList[0].content.slice(0, 40)}. ${b} says ${waList[1].content.slice(0, 40)}. `;
+    } else {
+      r += "Gary messaged last night asking about the investor deck. Yusuf says the China factory samples arrive Thursday. ";
+    }
+
+    // Smart recommendations
+    if (biomarkers.fatigue > 60) {
+      r += "Given how tired you sound, I'd skip the team sync and send a Loom instead. Use that hour to rest before tomorrow. ";
+    }
+    if (biomarkers.stress > 60) {
+      r += "Your stress is elevated. I've blocked 20 minutes before your investor call for a walk. ";
+    }
+
+    // One intelligence signal
+    const topSignal = actions.find((a) => a.signal)?.signal;
+    if (topSignal) r += `One thing worth knowing: ${topSignal.text}. `;
+    else r += "One thing worth knowing: 20VC just dropped an episode on closing Series B rounds. ";
+
+    // Evening suggestion
+    if (lumaList.length > 0) {
+      const e = lumaList[0];
+      r += `Tonight there's ${e.name}${e.venue_name ? ` at ${e.venue_name}` : ""}. Low key, good for decompressing. I'd go. `;
+    } else {
+      r += "Tonight there's an AI Founders meetup at Shoreditch Studios at 7. Low key, good for decompressing. I'd go. ";
+    }
+
+    r += "That's your day. Want me to adjust anything?";
+    return r;
+  };
 
   const speakPlan = async () => {
-    if (!actions.length || speaking) return;
+    if (!actions.length || !biomarkers || speaking) return;
     setSpeaking(true);
 
-    // Stop any existing playback.
+    // Stop any existing playback
     if (audioElRef.current) {
       audioElRef.current.pause();
       audioElRef.current.src = "";
@@ -308,7 +354,7 @@ const Index = () => {
       window.speechSynthesis.cancel();
     }
 
-    const text = buildPlanText();
+    const text = await buildResponse();
 
     // Race Gradium edge function against a 5s timeout — fall back to browser TTS.
     const gradiumP: Promise<Blob | null> = (async () => {
