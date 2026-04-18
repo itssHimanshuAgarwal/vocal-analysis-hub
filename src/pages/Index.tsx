@@ -2,6 +2,15 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { analyzeBiomarkers, type Biomarkers } from "@/lib/analyzeBiomarkers";
 import { BiomarkerCard } from "@/components/BiomarkerCard";
 import { TranscriptCard } from "@/components/TranscriptCard";
+import { ActionPlan } from "@/components/ActionPlan";
+import { SponsorBadges } from "@/components/SponsorBadges";
+import { Particles } from "@/components/Particles";
+import { generatePlan, type Action } from "@/lib/generatePlan";
+import { HARDCODED_SIGNALS, type Signal } from "@/lib/signals";
+import { supabase } from "@/integrations/supabase/client";
+
+// Production: Speechmatics API for medical-grade accuracy
+// Production: Gradium TTS for natural low-latency voice
 
 const MicIcon = ({ className = "" }: { className?: string }) => (
   <svg
@@ -52,7 +61,11 @@ const Index = () => {
   const [countdown, setCountdown] = useState(15);
   const [transcript, setTranscript] = useState("");
   const [biomarkers, setBiomarkers] = useState<Biomarkers | null>(null);
+  const [biomarkerSource, setBiomarkerSource] = useState<"live" | "simulated" | null>(null);
+  const [actions, setActions] = useState<Action[]>([]);
+  const [signalSource, setSignalSource] = useState<"live" | "fallback" | null>(null);
   const [fallbackText, setFallbackText] = useState("");
+  const [particleTrigger, setParticleTrigger] = useState(0);
 
   const speechSupported = useMemo(
     () =>
@@ -65,6 +78,7 @@ const Index = () => {
   );
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
   const streamRef = useRef<MediaStream | null>(null);
   const recognitionRef = useRef<any>(null);
   const timerRef = useRef<number | null>(null);
