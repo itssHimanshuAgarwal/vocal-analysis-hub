@@ -79,7 +79,7 @@ export const buildReply = (intent: Intent, ctx: ReplyContext): string => {
     }
 
     case "curious": {
-      return "Okay, here's what I'd recommend. First, before your call with Greg tomorrow, listen to the 20VC episode on closing a Series B. Harry Stebbings covers exactly what you need. Second, reply to Gary right now, just two lines saying the deck will be ready by noon tomorrow. Third, there's an AI Founders event tonight at Shoreditch. Low key, 43 people. I think you should go, it's good for decompression. Fourth, there's a voice agent framework trending on GitHub with 1200 stars. Worth bookmarking for your build. And fifth, Morning Brew says UK funding hit a 3-year high. Drop that stat into your deck. That's it. Want me to go deeper on any of these?";
+      return "Okay, here's what I'd recommend. First, before your call with Greg tomorrow, listen to the 20VC episode on closing a Series B. Harry Stebbings covers exactly what you need. Second, reply to Gary right now, just two lines saying the deck will be ready by noon tomorrow. Third, there's a Founders Gatherings event in San Francisco hosted by Kyosuke Togami and MindPal, small curated room of founders. I think you should request to join, structured founder rounds, no awkward small talk. Fourth, there's a voice agent framework trending on GitHub with 1200 stars. Worth bookmarking for your build. And fifth, Morning Brew says UK funding hit a 3-year high. Drop that stat into your deck. That's it. Want me to go deeper on any of these?";
     }
 
     case "farewell":
