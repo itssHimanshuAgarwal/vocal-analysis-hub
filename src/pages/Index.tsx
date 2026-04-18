@@ -190,16 +190,57 @@ const Index = () => {
     streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
 
+    // Speechmatics race: kick off in parallel with biomarkers + signals.
+    const speechmaticsP = (async () => {
+      if (!audioBlob || audioBlob.size < 100) return null;
+      try {
+        const fd = new FormData();
+        fd.append("audio", audioBlob, "voice.webm");
+        const { data, error } = await supabase.functions.invoke("transcribe-speech", { body: fd });
+        if (error || !data?.ok || !data?.transcript) return null;
+        return String(data.transcript);
+      } catch (e) {
+        console.warn("speechmatics invoke failed", e);
+        return null;
+      }
+    })();
+
     const minScan = new Promise((r) => setTimeout(r, 2500));
-    const [{ bio, bioSource, signals, sigSource }] = await Promise.all([
+    const [{ bio, bioSource, signals, sigSource }, smTranscript] = await Promise.all([
       runAnalysis(finalText, audioBlob),
+      speechmaticsP,
       minScan,
-    ]);
+    ]) as [Awaited<ReturnType<typeof runAnalysis>>, string | null, unknown];
+
+    // If Speechmatics returned a more accurate transcript, swap it in.
+    let usedTranscript = finalText;
+    if (smTranscript && smTranscript.trim().length > 0) {
+      usedTranscript = smTranscript.trim();
+      setTranscript(usedTranscript);
+      transcriptRef.current = usedTranscript;
+    }
+
+    const plan = generatePlan(usedTranscript, bio, signals, { morning });
+
+    // Compute lit-up sources from chosen signals.
+    const sources = new Set<SourceKey>();
+    plan.forEach((a) => {
+      if (a.signal) {
+        const key = SOURCE_FROM_SIGNAL[a.signal.source.toUpperCase()];
+        if (key) sources.add(key);
+      }
+    });
+    if (morning) {
+      sources.add("WA");
+      sources.add("NL");
+    }
 
     setBiomarkers(bio);
     setBiomarkerSource(bioSource);
     setSignalSource(sigSource);
-    setActions(generatePlan(finalText, bio, signals));
+    setActions(plan);
+    setActiveSources(sources);
+    setHasRecorded(true);
     setPhase("results");
     setParticleTrigger(Date.now());
   };
