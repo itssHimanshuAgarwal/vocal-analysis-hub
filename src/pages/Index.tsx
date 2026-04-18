@@ -673,6 +673,7 @@ const Index = () => {
       </div>
 
       <Particles trigger={particleTrigger} />
+      <SourcePanel sourceKey={openSource} onClose={() => setOpenSource(null)} />
     </main>
   );
 };
