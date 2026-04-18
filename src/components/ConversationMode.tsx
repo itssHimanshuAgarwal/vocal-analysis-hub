@@ -128,7 +128,20 @@ export const ConversationMode = ({ biomarkers, actions, active, onExit }: Props)
         .map((a) => a.signal)
         .filter(Boolean)
         .map((s) => ({ text: (s as NonNullable<Action["signal"]>).text }));
-      const calendarEvents = eventsCache.map((e) => {
+
+      // Ensure we have calendar events before calling GPT — otherwise it'll
+      // confidently say "you have nothing tomorrow".
+      let events = eventsCache;
+      if (events.length === 0) {
+        try {
+          events = await fetchTomorrowEvents();
+          setEventsCache(events);
+        } catch {
+          events = [];
+        }
+      }
+
+      const calendarEvents = events.map((e) => {
         const d = new Date(e.start);
         const startTime = isNaN(d.getTime())
           ? ""
