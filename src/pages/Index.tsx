@@ -12,7 +12,8 @@ import { AgentPipeline } from "@/components/AgentPipeline";
 import { generatePlan, type Action } from "@/lib/generatePlan";
 import { HARDCODED_SIGNALS, type Signal } from "@/lib/signals";
 import { supabase } from "@/integrations/supabase/client";
-import { fetchAllSignals } from "@/services/signalitClient";
+import { fetchAllSignals, fetchWhatsappRecent, fetchLumaUpcoming } from "@/services/signalitClient";
+import { PlanTabs } from "@/components/PlanTabs";
 
 // Production: Speechmatics API for medical-grade accuracy
 // Production: Gradium TTS for natural low-latency voice
