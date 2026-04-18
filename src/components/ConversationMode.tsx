@@ -224,20 +224,35 @@ export const ConversationMode = ({ biomarkers, actions, active, onExit }: Props)
   };
 
   const planReadout = (): string => {
-    if (eventsCache.length === 0) {
-      return "Tomorrow you have a packed day: gym at 7, tennis at 11, lunch at 1, call with mom at 2, sales pitch work at 2:30, meeting Greg for seed funding at 4, talking to Lisa about hiring a product lead at 6, and groceries at 7:30. Want me to break any of these down?";
+    // Surface only the SINGLE highest-stakes event.
+    const PRIORITY = [
+      { rx: /greg|seed|fundrais|investor/i, label: "seed funding call with Greg", time: "4pm" },
+      { rx: /lisa|hiring|product lead/i, label: "conversation with Lisa about hiring a product lead", time: "6pm" },
+      { rx: /board/i, label: "board meeting", time: "" },
+    ];
+
+    if (eventsCache.length > 0) {
+      for (const p of PRIORITY) {
+        const hit = eventsCache.find((e) => p.rx.test(e.summary));
+        if (hit) {
+          const d = new Date(hit.start);
+          const time = isNaN(d.getTime())
+            ? p.time
+            : d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+          return `You have ${p.label} tomorrow at ${time}. Want me to prep you for it?`;
+        }
+      }
+      // No priority match: pick the first event.
+      const first = eventsCache[0];
+      const d = new Date(first.start);
+      const time = isNaN(d.getTime())
+        ? ""
+        : d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+      return `The big one tomorrow is ${first.summary} at ${time}. Want me to prep you for it?`;
     }
-    const list = eventsCache
-      .slice(0, 6)
-      .map((e) => {
-        const d = new Date(e.start);
-        const time = isNaN(d.getTime())
-          ? ""
-          : d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
-        return `${e.summary} at ${time}`;
-      })
-      .join(", ");
-    return `Here's tomorrow: ${list}. Want me to break any of these down?`;
+
+    // Fallback when calendar isn't loaded.
+    return "You have a seed funding call with Greg tomorrow at 4pm. Want me to prep you for it?";
   };
 
   const handleUserUtterance = async (text: string) => {
