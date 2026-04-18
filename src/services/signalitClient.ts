@@ -180,3 +180,155 @@ export async function fetchAllSignals(): Promise<{ signals: LiveSignal[]; source
 
   return { signals, sources };
 }
+
+// =================================================================
+// Signals tab — top items across tables, ranked by signal_strength
+// =================================================================
+export type TopSignal = {
+  source: string;
+  title: string;
+  summary: string;
+  strength: number;
+  live: true;
+};
+
+const num = (v: any, def = 0) => {
+  const n = Number(v);
+  return isFinite(n) ? n : def;
+};
+
+export async function fetchTopSignals(limit = 30): Promise<TopSignal[]> {
+  const [nl, tw, li, rd, pod, lu, dc, wa] = await Promise.all([
+    safe<any>(
+      signalitDb.from("newsletter_stories")
+        .select("title, source_name, summary, signal_strength")
+        .order("signal_strength", { ascending: false }).limit(8),
+    ),
+    safe<any>(
+      signalitDb.from("twitter_signals")
+        .select("content, username, signal_strength")
+        .order("signal_strength", { ascending: false }).limit(8),
+    ),
+    safe<any>(
+      signalitDb.from("linkedin_signals")
+        .select("content, author_name, signal_strength")
+        .order("signal_strength", { ascending: false }).limit(8),
+    ),
+    safe<any>(
+      signalitDb.from("reddit_signals")
+        .select("title, subreddit, sentiment_score")
+        .order("created_at", { ascending: false }).limit(8),
+    ),
+    safe<any>(
+      signalitDb.from("podcast_episodes")
+        .select("title, show_name, crux")
+        .order("created_at", { ascending: false }).limit(8),
+    ),
+    safe<any>(
+      signalitDb.from("luma_events")
+        .select("name, venue_name, relevance_score, start_date")
+        .order("relevance_score", { ascending: false }).limit(6),
+    ),
+    safe<any>(
+      signalitDb.from("discord_signals")
+        .select("content, channel_name, ai_signal")
+        .order("created_at", { ascending: false }).limit(6),
+    ),
+    safe<any>(
+      signalitDb.from("whatsapp_signals")
+        .select("content, source_group, signal_type")
+        .order("created_at", { ascending: false }).limit(6),
+    ),
+  ]);
+
+  const out: TopSignal[] = [];
+  nl.forEach((r) => out.push({
+    source: "NEWSLETTER",
+    title: truncate(r.source_name || r.title || "Newsletter", 80),
+    summary: truncate(r.title || r.summary || "", 140),
+    strength: num(r.signal_strength, 50),
+    live: true,
+  }));
+  tw.forEach((r) => out.push({
+    source: "TWITTER",
+    title: `@${r.username ?? "x"}`,
+    summary: truncate(r.content || "", 140),
+    strength: num(r.signal_strength, 50),
+    live: true,
+  }));
+  li.forEach((r) => out.push({
+    source: "LINKEDIN",
+    title: r.author_name || "LinkedIn",
+    summary: truncate(r.content || "", 140),
+    strength: num(r.signal_strength, 50),
+    live: true,
+  }));
+  rd.forEach((r) => out.push({
+    source: "REDDIT",
+    title: `r/${r.subreddit ?? "reddit"}`,
+    summary: truncate(r.title || "", 140),
+    strength: Math.round(Math.abs(num(r.sentiment_score, 0.5)) * 100),
+    live: true,
+  }));
+  pod.forEach((r) => out.push({
+    source: "PODCAST",
+    title: r.show_name || "Podcast",
+    summary: truncate(r.crux || r.title || "", 140),
+    strength: 70,
+    live: true,
+  }));
+  lu.forEach((r) => out.push({
+    source: "LUMA",
+    title: truncate(r.name || "Event", 80),
+    summary: truncate(r.venue_name || "", 140),
+    strength: num(r.relevance_score, 60),
+    live: true,
+  }));
+  dc.forEach((r) => out.push({
+    source: "DISCORD",
+    title: `#${r.channel_name ?? "discord"}`,
+    summary: truncate(r.ai_signal || r.content || "", 140),
+    strength: 55,
+    live: true,
+  }));
+  wa.forEach((r) => out.push({
+    source: "WHATSAPP",
+    title: r.source_group || "WhatsApp",
+    summary: truncate(r.content || "", 140),
+    strength: 60,
+    live: true,
+  }));
+
+  return out.sort((a, b) => b.strength - a.strength).slice(0, limit);
+}
+
+// Context tab helpers
+export type WhatsappPreview = { sender: string; content: string; created_at?: string | null };
+export type LumaPreview = { name: string; start_date?: string | null; venue_name?: string | null; rsvp_count?: number | null };
+
+export async function fetchWhatsappRecent(limit = 5): Promise<WhatsappPreview[]> {
+  const rows = await safe<any>(
+    signalitDb.from("whatsapp_signals")
+      .select("content, source_group, created_at")
+      .order("created_at", { ascending: false }).limit(limit),
+  );
+  return rows.map((r) => ({
+    sender: r.source_group || "WhatsApp",
+    content: truncate(r.content || "", 120),
+    created_at: r.created_at,
+  }));
+}
+
+export async function fetchLumaUpcoming(limit = 3): Promise<LumaPreview[]> {
+  const rows = await safe<any>(
+    signalitDb.from("luma_events")
+      .select("name, start_date, venue_name, rsvp_count")
+      .order("start_date", { ascending: true }).limit(limit),
+  );
+  return rows.map((r) => ({
+    name: r.name || "Event",
+    start_date: r.start_date,
+    venue_name: r.venue_name,
+    rsvp_count: r.rsvp_count,
+  }));
+}
