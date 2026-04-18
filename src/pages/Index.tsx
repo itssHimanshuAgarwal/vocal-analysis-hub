@@ -179,6 +179,10 @@ const Index = () => {
       try { mr.stop(); } catch { resolve(null); }
     });
 
+    // Now safe to release the mic stream.
+    streamRef.current?.getTracks().forEach((t) => t.stop());
+    streamRef.current = null;
+
     const minScan = new Promise((r) => setTimeout(r, 2500));
     const [{ bio, bioSource, signals, sigSource }] = await Promise.all([
       runAnalysis(finalText, audioBlob),
@@ -191,6 +195,23 @@ const Index = () => {
     setActions(generatePlan(finalText, bio, signals));
     setPhase("results");
     setParticleTrigger(Date.now());
+  };
+
+  const speakPlan = () => {
+    if (!actions.length || typeof window === "undefined" || !window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+    const intro = new SpeechSynthesisUtterance("Here is your plan, locked in.");
+    intro.rate = 1.05;
+    window.speechSynthesis.speak(intro);
+    actions.forEach((a, i) => {
+      const u = new SpeechSynthesisUtterance(`${a.time}. ${a.text}.`);
+      u.rate = 1.0;
+      u.pitch = 1.0;
+      if (i === actions.length - 1) {
+        u.onend = () => setParticleTrigger(Date.now());
+      }
+      window.speechSynthesis.speak(u);
+    });
   };
 
   const startRecording = async () => {
