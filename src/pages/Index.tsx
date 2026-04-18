@@ -13,7 +13,9 @@ import { generatePlan, type Action } from "@/lib/generatePlan";
 import { HARDCODED_SIGNALS, type Signal } from "@/lib/signals";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchAllSignals, fetchWhatsappRecent, fetchLumaUpcoming } from "@/services/signalitClient";
+import { fetchTomorrowEvents, type CalendarEvent } from "@/services/calendarClient";
 import { PlanTabs } from "@/components/PlanTabs";
+import { BriefingBar } from "@/components/BriefingBar";
 
 // Production: Speechmatics API for medical-grade accuracy
 // Production: Gradium TTS for natural low-latency voice
