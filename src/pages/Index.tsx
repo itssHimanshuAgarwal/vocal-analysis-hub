@@ -69,6 +69,7 @@ const Index = () => {
   const recognitionRef = useRef<any>(null);
   const timerRef = useRef<number | null>(null);
   const autoStopRef = useRef<number | null>(null);
+  const transcriptRef = useRef("");
 
   const cleanupRecording = () => {
     if (timerRef.current) {
@@ -92,15 +93,20 @@ const Index = () => {
 
   useEffect(() => () => cleanupRecording(), []);
 
-  const finishRecording = () => {
+  const finishRecording = (overrideTranscript?: string) => {
     cleanupRecording();
+    const finalText = overrideTranscript ?? transcriptRef.current;
+    setBiomarkers(analyzeBiomarkers(finalText));
+    if (overrideTranscript !== undefined) setTranscript(overrideTranscript);
     setPhase("scanning");
     window.setTimeout(() => setPhase("results"), 2500);
   };
 
   const startRecording = async () => {
     setTranscript("");
+    transcriptRef.current = "";
     setCountdown(15);
+    setBiomarkers(null);
     setPhase("recording");
 
     try {
@@ -127,6 +133,7 @@ const Index = () => {
           for (let i = 0; i < e.results.length; i++) {
             text += e.results[i][0].transcript;
           }
+          transcriptRef.current = text;
           setTranscript(text);
         };
         rec.start();
@@ -140,7 +147,13 @@ const Index = () => {
       setCountdown((c) => (c > 0 ? c - 1 : 0));
     }, 1000);
 
-    autoStopRef.current = window.setTimeout(finishRecording, 15000);
+    autoStopRef.current = window.setTimeout(() => finishRecording(), 15000);
+  };
+
+  const handleFallbackSubmit = () => {
+    if (!fallbackText.trim()) return;
+    finishRecording(fallbackText.trim());
+    setFallbackText("");
   };
 
   const handleMicClick = () => {
