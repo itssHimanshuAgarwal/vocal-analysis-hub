@@ -567,6 +567,13 @@ const Index = () => {
             </p>
           )}
 
+          {/* Live agent pipeline — visible while recording so users see the system working in real time */}
+          {isRecording && (
+            <div className="mt-10 w-full max-w-4xl animate-fade-up">
+              <AgentPipeline phase={phase} />
+            </div>
+          )}
+
           {/* Typed fallback when SpeechRecognition isn't supported */}
           {!speechSupported && phase !== "recording" && phase !== "scanning" && (
             <div className="mt-10 w-full max-w-xl">
@@ -617,33 +624,37 @@ const Index = () => {
             aria-live="polite"
           >
             {phase === "scanning" ? (
-              <div className="relative overflow-hidden rounded-2xl border border-white/[0.06] bg-[#111113] p-10">
-                <div className="text-zinc-400 text-sm tracking-wide">
-                  reading your voice...
-                </div>
-                <div className="mt-6 h-24 relative overflow-hidden rounded-xl bg-[#0c0c0e] border border-white/[0.04]">
-                  <div
-                    className="absolute top-0 bottom-0 w-32 animate-scan-sweep"
-                    style={{
-                      background:
-                        "linear-gradient(90deg, transparent, rgba(0,212,126,0.6), transparent)",
-                      boxShadow: "0 0 24px rgba(0,212,126,0.6)",
-                    }}
-                  />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="flex items-end gap-1 h-10">
-                      {Array.from({ length: 30 }).map((_, i) => (
-                        <div
-                          key={i}
-                          className="w-1 rounded-full bg-[#00D47E]/40"
-                          style={{
-                            height: `${10 + Math.abs(Math.sin(i * 0.6)) * 24}px`,
-                          }}
-                        />
-                      ))}
+              <div className="space-y-6">
+                <div className="relative overflow-hidden rounded-2xl border border-white/[0.06] bg-[#111113] p-10">
+                  <div className="text-zinc-400 text-sm tracking-wide">
+                    processing your voice through 12 sources...
+                  </div>
+                  <div className="mt-6 h-24 relative overflow-hidden rounded-xl bg-[#0c0c0e] border border-white/[0.04]">
+                    <div
+                      className="absolute top-0 bottom-0 w-32 animate-scan-sweep"
+                      style={{
+                        background:
+                          "linear-gradient(90deg, transparent, rgba(0,212,126,0.6), transparent)",
+                        boxShadow: "0 0 24px rgba(0,212,126,0.6)",
+                      }}
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="flex items-end gap-1 h-10">
+                        {Array.from({ length: 30 }).map((_, i) => (
+                          <div
+                            key={i}
+                            className="w-1 rounded-full bg-[#00D47E]/40"
+                            style={{
+                              height: `${10 + Math.abs(Math.sin(i * 0.6)) * 24}px`,
+                            }}
+                          />
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </div>
+                {/* Keep pipeline animating during the scan/processing window */}
+                <AgentPipeline phase={phase} />
               </div>
             ) : (
               biomarkers && (
