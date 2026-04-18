@@ -108,6 +108,10 @@ export default {
           "0%": { transform: "translateX(-120%)" },
           "100%": { transform: "translateX(220%)" },
         },
+        "tts-bar": {
+          "0%, 100%": { transform: "scaleY(0.3)" },
+          "50%": { transform: "scaleY(1)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -121,6 +125,7 @@ export default {
         "scan-sweep": "scan-sweep 2.5s ease-in-out infinite",
         "title-glow": "title-glow 4s ease-in-out infinite",
         "shimmer": "shimmer 1.4s ease-out both",
+        "tts-bar": "tts-bar 0.6s ease-in-out infinite",
       },
     },
   },
