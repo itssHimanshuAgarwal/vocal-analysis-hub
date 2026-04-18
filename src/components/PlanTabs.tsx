@@ -13,7 +13,7 @@ import {
 } from "@/services/signalitClient";
 import { SOURCE_FROM_SIGNAL, type SourceKey } from "@/components/SourcesStrip";
 
-type TabId = "plan" | "signals" | "context";
+type TabId = "plan" | "signals" | "context" | "signalit";
 
 interface Props {
   actions: Action[];
@@ -41,6 +41,7 @@ const TABS: Array<{ id: TabId; label: string }> = [
   { id: "plan", label: "Your Plan" },
   { id: "signals", label: "Your Signals" },
   { id: "context", label: "Your Context" },
+  { id: "signalit", label: "SignalIT" },
 ];
 
 const timeAgo = (iso?: string | null) => {
@@ -297,7 +298,9 @@ export const PlanTabs = ({
               }}
               className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
                 active
-                  ? "bg-green-500/10 text-green-400 border border-green-500/20"
+                  ? t.id === "signalit"
+                    ? "bg-purple-500/10 text-purple-400 border border-purple-500/20"
+                    : "bg-green-500/10 text-green-400 border border-green-500/20"
                   : "bg-zinc-800/50 text-zinc-500 border border-transparent hover:text-zinc-300"
               }`}
             >
@@ -331,6 +334,23 @@ export const PlanTabs = ({
             Your Context
           </div>
           {renderContext()}
+        </div>
+      )}
+      {activeTab === "signalit" && (
+        <div>
+          <div className="text-xs text-zinc-500 mb-3">
+            Your Intelligence Hub — 12 sources, 88 signals today
+          </div>
+          <iframe
+            src="https://signalium-hub.lovable.app"
+            title="SignalIT"
+            frameBorder={0}
+            allow="*"
+            className="w-full h-[600px] rounded-xl border border-white/[0.06] bg-[#09090B]"
+          />
+          <div className="text-[10px] text-zinc-600 mt-2 text-center">
+            powered by SignalIT
+          </div>
         </div>
       )}
     </div>
