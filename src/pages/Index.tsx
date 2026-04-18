@@ -109,7 +109,7 @@ const Index = () => {
     }
   };
 
-  useEffect(() => () => cleanupRecording(), []);
+  useEffect(() => () => cleanupRecording({ stopRecorder: true, stopStream: true }), []);
 
   const runAnalysis = async (
     finalText: string,
@@ -447,10 +447,19 @@ const Index = () => {
               </div>
             ) : (
               biomarkers && (
-                <div className="space-y-8">
+                <div className="space-y-10">
                   <div>
-                    <div className="text-[11px] uppercase tracking-[0.2em] text-zinc-500 mb-6 font-medium">
-                      WHAT YOUR VOICE REVEALS
+                    <div className="flex items-baseline justify-between mb-6">
+                      <div className="text-[11px] uppercase tracking-[0.2em] text-zinc-500 font-medium">
+                        WHAT YOUR VOICE REVEALS
+                      </div>
+                      <div
+                        className={`text-[10px] uppercase tracking-[0.2em] font-medium ${
+                          biomarkerSource === "live" ? "text-green-400" : "text-zinc-500"
+                        }`}
+                      >
+                        {biomarkerSource === "live" ? "● live biomarkers" : "○ simulated"}
+                      </div>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <BiomarkerCard kind="stress" score={biomarkers.stress} delayMs={0} />
@@ -459,15 +468,44 @@ const Index = () => {
                       <BiomarkerCard kind="focus" score={biomarkers.focus} delayMs={450} />
                     </div>
                   </div>
+
                   <TranscriptCard transcript={transcript} delayMs={600} />
+
+                  {actions.length > 0 && (
+                    <ActionPlan actions={actions} delayMs={900} />
+                  )}
+
+                  {/* Bottom controls */}
+                  <div
+                    className="mt-8 pt-6 border-t border-white/[0.06] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 opacity-0 animate-fade-up"
+                    style={{ animationDelay: "1700ms" }}
+                  >
+                    <button
+                      onClick={speakPlan}
+                      className="self-start rounded-full bg-green-500 px-6 py-3 text-sm font-semibold text-black transition-all duration-500 ease-out hover:scale-[1.02] hover:bg-green-400 shadow-[0_0_30px_-5px_rgba(0,212,126,0.5)]"
+                    >
+                      Listen to your plan
+                    </button>
+                    <SponsorBadges activated={phase === "results"} />
+                  </div>
+
+                  {signalSource && (
+                    <div className="text-[10px] text-zinc-600 text-right">
+                      signals: {signalSource === "live" ? "TinyFish live feed" : "fallback intelligence pool"}
+                    </div>
+                  )}
                 </div>
               )
             )}
           </section>
         )}
       </div>
+
+      <Particles trigger={particleTrigger} />
     </main>
   );
 };
+
+export default Index;
 
 export default Index;
