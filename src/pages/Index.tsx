@@ -524,15 +524,20 @@ const Index = () => {
                 listening... <span className="text-[#00D47E]">{countdown}</span>
               </span>
             ) : (
-              <span className="text-zinc-600 animate-breathe">
-                tap to check in
+              <span className="text-[10px] text-green-400 tracking-[0.2em] uppercase animate-breathe">
+                powered by Gradium Voice AI
               </span>
             )}
           </div>
 
           {/* Waveform */}
-          <div className="mt-6 h-10 w-full max-w-md">
+          <div className="mt-6 h-10 w-full max-w-md relative">
             {isRecording && <Waveform active={isRecording} />}
+            {isRecording && (
+              <span className="absolute right-0 -bottom-3 text-[10px] text-green-400 tracking-wider">
+                ● Gradium STT
+              </span>
+            )}
           </div>
 
           {isRecording && transcript && (
