@@ -79,7 +79,7 @@ const Index = () => {
   const [activeSources, setActiveSources] = useState<Set<SourceKey>>(new Set());
   const [speaking, setSpeaking] = useState(false);
   const [openSource, setOpenSource] = useState<SourceKey | null>(null);
-  const [activeTab, setActiveTab] = useState<"plan" | "signalit">("plan");
+  const [activeTab, setActiveTab] = useState<"plan" | "signalit" | "next">("plan");
   const [tabSourceFilter, setTabSourceFilter] = useState<SourceKey | null>(null);
   const [ringSource, setRingSource] = useState<SourceKey | null>(null);
   const [briefingStarted, setBriefingStarted] = useState(false);
@@ -134,7 +134,7 @@ const Index = () => {
     if (phase !== "results" || briefingStarted || !biomarkers || !actions.length) return;
     const t = window.setTimeout(() => {
       setBriefingStarted(true);
-    }, 4500);
+    }, 300);
     return () => clearTimeout(t);
   }, [phase, biomarkers, actions, briefingStarted]);
 
