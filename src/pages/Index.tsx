@@ -129,6 +129,17 @@ const Index = () => {
 
   useEffect(() => () => cleanupRecording({ stopRecorder: true, stopStream: true }), []);
 
+  // Auto-speak briefing once results are ready (after pipeline animation ~3.2s + 1s)
+  useEffect(() => {
+    if (phase !== "results" || briefingStarted || !biomarkers || !actions.length) return;
+    setBriefingStarted(true);
+    const t = window.setTimeout(() => {
+      speakPlan();
+    }, 4500);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, biomarkers, actions, briefingStarted]);
+
   const runAnalysis = async (
     finalText: string,
     audioBlob: Blob | null,
