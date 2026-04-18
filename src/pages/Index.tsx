@@ -85,7 +85,7 @@ const Index = () => {
   const autoStopRef = useRef<number | null>(null);
   const transcriptRef = useRef("");
 
-  const cleanupRecording = () => {
+  const cleanupRecording = (opts: { stopRecorder?: boolean; stopStream?: boolean } = { stopRecorder: true, stopStream: true }) => {
     if (timerRef.current) {
       clearInterval(timerRef.current);
       timerRef.current = null;
@@ -95,14 +95,18 @@ const Index = () => {
       autoStopRef.current = null;
     }
     try {
-      mediaRecorderRef.current?.state !== "inactive" &&
-        mediaRecorderRef.current?.stop();
-    } catch {}
-    try {
       recognitionRef.current?.stop();
     } catch {}
-    streamRef.current?.getTracks().forEach((t) => t.stop());
-    streamRef.current = null;
+    if (opts.stopRecorder) {
+      try {
+        mediaRecorderRef.current?.state !== "inactive" &&
+          mediaRecorderRef.current?.stop();
+      } catch {}
+    }
+    if (opts.stopStream) {
+      streamRef.current?.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+    }
   };
 
   useEffect(() => () => cleanupRecording(), []);
@@ -150,7 +154,8 @@ const Index = () => {
   };
 
   const finishRecording = async (overrideTranscript?: string) => {
-    cleanupRecording();
+    // Stop timers + speech recognition, but keep MediaRecorder alive long enough to capture final blob.
+    cleanupRecording({ stopRecorder: false, stopStream: false });
     const finalText = overrideTranscript ?? transcriptRef.current;
     if (overrideTranscript !== undefined) {
       setTranscript(overrideTranscript);
