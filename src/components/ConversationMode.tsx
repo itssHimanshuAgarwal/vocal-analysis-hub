@@ -27,6 +27,7 @@ export const ConversationMode = ({ biomarkers, actions, active, onExit }: Props)
   const startedRef = useRef(false);
   const stoppedRef = useRef(false);
   const logRef = useRef<HTMLDivElement | null>(null);
+  const historyRef = useRef<ChatTurn[]>([]);
 
   const nextId = () => ++idRef.current;
 
@@ -121,15 +122,59 @@ export const ConversationMode = ({ biomarkers, actions, active, onExit }: Props)
     utts.forEach((u) => window.speechSynthesis.speak(u));
   };
 
-  const handleUserUtterance = (text: string) => {
+  const fetchAiReply = async (userMessage: string): Promise<string | null> => {
+    try {
+      const signals = actions
+        .map((a) => a.signal)
+        .filter(Boolean)
+        .map((s) => ({ text: (s as NonNullable<Action["signal"]>).text }));
+      const calendarEvents = eventsCache.map((e) => {
+        const d = new Date(e.start);
+        const startTime = isNaN(d.getTime())
+          ? ""
+          : d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+        return { summary: e.summary, startTime };
+      });
+      const { data, error } = await supabase.functions.invoke("chat-conversation", {
+        body: {
+          userMessage,
+          biomarkers,
+          calendarEvents,
+          signals,
+          history: historyRef.current.slice(-12),
+        },
+      });
+      if (error) {
+        console.warn("chat-conversation error", error);
+        return null;
+      }
+      if (!data?.ok || typeof data?.reply !== "string" || !data.reply.trim()) {
+        return null;
+      }
+      return data.reply.trim();
+    } catch (e) {
+      console.warn("chat-conversation invoke failed", e);
+      return null;
+    }
+  };
+
+  const handleUserUtterance = async (text: string) => {
     append({ role: "user", text });
+    historyRef.current.push({ role: "user", content: text });
+
+    let reply = await fetchAiReply(text);
     const intent = detectIntent(text);
-    const reply = buildReply(intent, {
-      biomarkers,
-      actions,
-      events: eventsCache,
-    });
+    if (!reply) {
+      reply = buildReply(intent, {
+        biomarkers,
+        actions,
+        events: eventsCache,
+      });
+    }
+
     append({ role: "agent", text: reply });
+    historyRef.current.push({ role: "assistant", content: reply });
+
     speak(reply, () => {
       if (intent === "farewell") {
         setStatus("idle");
@@ -148,6 +193,7 @@ export const ConversationMode = ({ biomarkers, actions, active, onExit }: Props)
     stoppedRef.current = false;
     const opener = buildOpener(biomarkers);
     append({ role: "agent", text: opener });
+    historyRef.current.push({ role: "assistant", content: opener });
     // Slight delay so the message is visible before TTS starts
     const t = window.setTimeout(() => {
       speak(opener, () => startListening());
