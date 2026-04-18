@@ -6,6 +6,7 @@ import { ActionPlan } from "@/components/ActionPlan";
 import { SponsorBadges } from "@/components/SponsorBadges";
 import { Particles } from "@/components/Particles";
 import { SourcesStrip, SOURCE_FROM_SIGNAL, type SourceKey } from "@/components/SourcesStrip";
+import { SourcePanel } from "@/components/SourcePanel";
 import { MorningContextCard } from "@/components/MorningContextCard";
 import { AgentPipeline } from "@/components/AgentPipeline";
 import { generatePlan, type Action } from "@/lib/generatePlan";
@@ -74,6 +75,7 @@ const Index = () => {
   const [hasRecorded, setHasRecorded] = useState(false);
   const [activeSources, setActiveSources] = useState<Set<SourceKey>>(new Set());
   const [speaking, setSpeaking] = useState(false);
+  const [openSource, setOpenSource] = useState<SourceKey | null>(null);
   const audioElRef = useRef<HTMLAudioElement | null>(null);
 
   const speechSupported = useMemo(
@@ -564,7 +566,7 @@ const Index = () => {
         {/* SOURCES (between hero and results, only after first recording) */}
         {hasRecorded && (
           <section className="mt-12">
-            <SourcesStrip active={activeSources} />
+            <SourcesStrip active={activeSources} onSelect={(k) => setOpenSource(k)} />
           </section>
         )}
 
@@ -671,6 +673,7 @@ const Index = () => {
       </div>
 
       <Particles trigger={particleTrigger} />
+      <SourcePanel sourceKey={openSource} onClose={() => setOpenSource(null)} />
     </main>
   );
 };

@@ -36,7 +36,12 @@ export const SOURCE_FROM_SIGNAL: Record<string, SourceKey> = {
   FUNDING: "FN",
 };
 
-export const SourcesStrip = ({ active }: { active: Set<SourceKey> }) => (
+interface SourcesStripProps {
+  active: Set<SourceKey>;
+  onSelect?: (key: SourceKey) => void;
+}
+
+export const SourcesStrip = ({ active, onSelect }: SourcesStripProps) => (
   <section
     className="opacity-0 animate-fade-up"
     style={{ animationDelay: "100ms" }}
@@ -49,9 +54,15 @@ export const SourcesStrip = ({ active }: { active: Set<SourceKey> }) => (
       {SOURCES.map((s) => {
         const isOn = active.has(s.key);
         return (
-          <div key={s.key} className="flex flex-col items-center gap-1 shrink-0">
+          <button
+            key={s.key}
+            type="button"
+            onClick={() => onSelect?.(s.key)}
+            className="flex flex-col items-center gap-1 shrink-0 group focus:outline-none"
+            aria-label={`Open ${s.label} signals`}
+          >
             <div
-              className={`relative w-10 h-10 rounded-full bg-[#18181B] border flex items-center justify-center transition-all duration-500 ease-out ${
+              className={`relative w-10 h-10 rounded-full bg-[#18181B] border flex items-center justify-center transition-all duration-300 ease-out group-hover:scale-110 group-hover:border-white/20 cursor-pointer ${
                 isOn
                   ? "border-green-500/50 text-green-400 shadow-[0_0_14px_-2px_rgba(0,212,126,0.6)]"
                   : "border-white/[0.06] text-zinc-400"
@@ -62,8 +73,8 @@ export const SourcesStrip = ({ active }: { active: Set<SourceKey> }) => (
                 <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-green-400 shadow-[0_0_6px_rgba(0,212,126,0.8)]" />
               )}
             </div>
-            <span className="text-[9px] text-zinc-600">{s.label}</span>
-          </div>
+            <span className="text-[9px] text-zinc-600 group-hover:text-zinc-400 transition-colors">{s.label}</span>
+          </button>
         );
       })}
     </div>
