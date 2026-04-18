@@ -12,7 +12,7 @@ interface Props {
 
 const TABS: Array<{ id: TabId; label: string }> = [
   { id: "plan", label: "Tomorrow's Plan" },
-  { id: "signalit", label: "SignalIT" },
+  { id: "signalit", label: "Signals" },
 ];
 
 const formatTime = (iso: string) => {
@@ -27,7 +27,7 @@ const formatTime = (iso: string) => {
 const formatRange = (startIso: string, endIso: string) => {
   const s = formatTime(startIso);
   const e = formatTime(endIso);
-  return s && e ? `${s} – ${e}` : s || e;
+  return s && e ? `${s} to ${e}` : s || e;
 };
 
 const formatDay = (iso: string) => {
@@ -153,13 +153,13 @@ export const PlanTabs = ({ delayMs, activeTab, onTabChange }: Props) => {
           </div>
           <iframe
             src="https://signalium-hub.lovable.app"
-            title="SignalIT"
+            title="Signals"
             frameBorder={0}
             allow="*"
             className="w-full h-[600px] rounded-xl border border-white/[0.06] bg-[#09090B]"
           />
           <div className="text-[10px] text-zinc-600 mt-2 text-center">
-            powered by SignalIT
+            powered by Signals
           </div>
         </div>
       )}

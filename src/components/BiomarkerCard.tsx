@@ -34,13 +34,13 @@ const config: Record<
 
 const insightFor = (kind: Kind, score: number): string | null => {
   if (kind === "stress" && score > 60)
-    return "elevated — consider reducing cognitive load";
+    return "elevated, consider reducing cognitive load";
   if (kind === "fatigue" && score > 60)
     return "your voice shows signs of exhaustion";
   if (kind === "energy" && score < 40)
-    return "low reserves — protect your peak hours";
+    return "low reserves, protect your peak hours";
   if (kind === "focus" && score < 40)
-    return "scattered — single-task mode recommended";
+    return "scattered, single-task mode recommended";
   return null;
 };
 
