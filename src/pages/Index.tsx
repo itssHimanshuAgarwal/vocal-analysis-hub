@@ -273,25 +273,6 @@ const Index = () => {
     setParticleTrigger(Date.now());
   };
 
-  const speakWithBrowser = (text: string) => {
-    if (typeof window === "undefined" || !window.speechSynthesis) return;
-    window.speechSynthesis.cancel();
-    // Split into sentences for more natural pacing
-    const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
-    sentences.forEach((s, i) => {
-      const u = new SpeechSynthesisUtterance(s.trim());
-      u.rate = 1.02;
-      u.pitch = 1;
-      if (i === sentences.length - 1) {
-        u.onend = () => {
-          setSpeaking(false);
-          setParticleTrigger(Date.now());
-        };
-      }
-      window.speechSynthesis.speak(u);
-    });
-  };
-
   const buildResponse = async (): Promise<string> => {
     if (!biomarkers) return "";
     const parts: string[] = [];
