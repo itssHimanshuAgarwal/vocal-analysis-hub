@@ -15,7 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { fetchAllSignals, fetchWhatsappRecent, fetchLumaUpcoming } from "@/services/signalitClient";
 import { fetchTomorrowEvents, type CalendarEvent } from "@/services/calendarClient";
 import { PlanTabs } from "@/components/PlanTabs";
-import { BriefingBar } from "@/components/BriefingBar";
+import { ConversationMode } from "@/components/ConversationMode";
 
 // Production: Speechmatics API for medical-grade accuracy
 // Production: Gradium TTS for natural low-latency voice
@@ -129,15 +129,13 @@ const Index = () => {
 
   useEffect(() => () => cleanupRecording({ stopRecorder: true, stopStream: true }), []);
 
-  // Auto-speak briefing once results are ready (after pipeline animation ~3.2s + 1s)
+  // Enter conversation mode once results are ready (after pipeline animation ~3.2s + 1s)
   useEffect(() => {
     if (phase !== "results" || briefingStarted || !biomarkers || !actions.length) return;
-    setBriefingStarted(true);
     const t = window.setTimeout(() => {
-      speakPlan();
+      setBriefingStarted(true);
     }, 4500);
     return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, biomarkers, actions, briefingStarted]);
 
   const runAnalysis = async (
@@ -710,12 +708,17 @@ const Index = () => {
                     />
                   </div>
 
-                  {briefingStarted && (
+                  {briefingStarted && biomarkers && (
                     <div
                       className="opacity-0 animate-fade-up"
                       style={{ animationDelay: "100ms", animationFillMode: "forwards" }}
                     >
-                      <BriefingBar speaking={speaking} onAsk={askFollowUp} />
+                      <ConversationMode
+                        biomarkers={biomarkers}
+                        actions={actions}
+                        active={briefingStarted}
+                        onExit={() => setBriefingStarted(false)}
+                      />
                     </div>
                   )}
 
