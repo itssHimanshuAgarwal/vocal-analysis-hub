@@ -452,6 +452,9 @@ const Index = () => {
       <div className="relative max-w-5xl mx-auto px-6 py-12">
         {/* HERO */}
         <section className="flex flex-col items-center justify-center text-center min-h-[80vh]">
+          <p className="text-[10px] text-green-400/50 tracking-[0.25em] uppercase mb-3">
+            built with Gradium
+          </p>
           <h1 className="text-5xl md:text-7xl font-black tracking-tighter text-white animate-title-glow">
             LOCKED IN
           </h1>
