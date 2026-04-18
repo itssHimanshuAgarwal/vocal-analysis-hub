@@ -542,6 +542,13 @@ const Index = () => {
           )}
         </section>
 
+        {/* SOURCES (between hero and results, only after first recording) */}
+        {hasRecorded && (
+          <section className="mt-12">
+            <SourcesStrip active={activeSources} />
+          </section>
+        )}
+
         {/* RESULTS */}
         {(phase === "scanning" || phase === "results") && (
           <section
@@ -617,9 +624,10 @@ const Index = () => {
                   >
                     <button
                       onClick={speakPlan}
-                      className="self-start rounded-full bg-green-500 px-6 py-3 text-sm font-semibold text-black transition-all duration-500 ease-out hover:scale-[1.02] hover:bg-green-400 shadow-[0_0_30px_-5px_rgba(0,212,126,0.5)]"
+                      disabled={speaking}
+                      className="self-start rounded-full bg-green-500 px-6 py-3 text-sm font-semibold text-black transition-all duration-500 ease-out hover:scale-[1.02] hover:bg-green-400 shadow-[0_0_30px_-5px_rgba(0,212,126,0.5)] disabled:opacity-60 disabled:cursor-not-allowed"
                     >
-                      Listen to your plan
+                      {speaking ? "Speaking…" : "Listen to your plan"}
                     </button>
                     <SponsorBadges activated={phase === "results"} />
                   </div>
