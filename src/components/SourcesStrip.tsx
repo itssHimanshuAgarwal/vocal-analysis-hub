@@ -3,13 +3,13 @@ import {
   SiYoutube,
   SiSubstack,
   SiSpotify,
-  SiLinkedin as SiLinkedinIcon,
   SiX,
   SiGithub,
   SiReddit,
   SiWhatsapp,
   SiDiscord,
 } from "react-icons/si";
+import { FaLinkedin } from "react-icons/fa";
 import { Calendar, BookOpen, DollarSign } from "lucide-react";
 
 export type SourceKey =
@@ -20,7 +20,7 @@ export const SOURCES: { key: SourceKey; label: string; Icon: IconType | typeof C
   { key: "YT", label: "YouTube", Icon: SiYoutube, brand: "#FF0000" },
   { key: "NL", label: "Newsletters", Icon: SiSubstack, brand: "#FF6719" },
   { key: "SP", label: "Spotify", Icon: SiSpotify, brand: "#1DB954" },
-  { key: "LI", label: "LinkedIn", Icon: SiLinkedin, brand: "#0A66C2" },
+  { key: "LI", label: "LinkedIn", Icon: FaLinkedin, brand: "#0A66C2" },
   { key: "TW", label: "Twitter", Icon: SiX, brand: "#FFFFFF" },
   { key: "GH", label: "GitHub", Icon: SiGithub, brand: "#FFFFFF" },
   { key: "RD", label: "Reddit", Icon: SiReddit, brand: "#FF4500" },
